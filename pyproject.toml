@@ -1,0 +1,13 @@
+[tool.ruff]
+line-length = 100
+
+ignore = ["E402", "F401"]
+unfixable = []
+
+per-file-ignores = {}
+
+
+pythonpath = ["."]
+
+[tool.pytest.ini_options]
+filterwarnings = ["ignore::DeprecationWarning"]
