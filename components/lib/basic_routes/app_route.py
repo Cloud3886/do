@@ -1,6 +1,6 @@
 import sys
 from typing import Self, Generic, TypeVar
-from components.lib.views.api_view import ApiView
+from components.lib.basic_routes.api_view import ApiView
 
 T = TypeVar("T", bound=ApiView)
 

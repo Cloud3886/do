@@ -1,6 +1,6 @@
 import pytest
 
-from components.lib.views.api_view import ApiView
+from components.lib.basic_routes.api_view import ApiView
 from components.test._components._testers import InstanceTester
 from components.utils.extensions import hash_gen
 

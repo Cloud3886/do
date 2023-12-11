@@ -1,13 +1,13 @@
 from flask.views import MethodView
 from flask_smorest import Blueprint, Api
 
-from components.lib.routers.flask_router import (
+from components.lib.flask_router.flask_router import (
     FlaskRouter,
     FlaskViewAdapter,
 )
-from components.lib.views.openapi_view import OpenapiView
-from components.lib.app_route import AppRoute
-from components.lib.views.ui_view import UiView
+from components.lib.smorest_router.openapi_view import OpenapiView
+from components.lib.basic_routes.app_route import AppRoute
+from components.lib.basic_routes.ui_view import UiView
 from components.utils.extensions import prettify
 
 

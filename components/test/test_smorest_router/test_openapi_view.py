@@ -1,5 +1,5 @@
-from components.lib.views.openapi_view import OpenapiView
-from components.test.test_views.test_ui_view import UiViewTester
+from components.lib.smorest_router.openapi_view import OpenapiView
+from components.test.test_basic_routes.test_ui_view import UiViewTester
 
 
 # ------------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-from components.lib.views.ui_view import UiView
+from components.lib.basic_routes.ui_view import UiView
 
 
 class LinkedIndex(UiView):

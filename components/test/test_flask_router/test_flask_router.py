@@ -1,13 +1,13 @@
 import pytest
 from flask import Flask
-from components.lib.database_manager import DatabaseManager
+from components.lib.database_manager.database_manager import DatabaseManager
 
 
-from components.lib.views.ui_view import UiView
-from components.lib.routers.flask_router import FlaskRouter
+from components.lib.basic_routes.ui_view import UiView
+from components.lib.flask_router.flask_router import FlaskRouter
 
-from components.test.test_views.test_ui_view import UiViewTester
-from components.test.test_app_route import AppRouteTester
+from components.test.test_basic_routes.test_ui_view import UiViewTester
+from components.test.test_basic_routes.test_app_route import AppRouteTester
 from components.test._components._testers import ClassTester
 
 create_view = UiViewTester.create_view

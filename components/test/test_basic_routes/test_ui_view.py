@@ -1,5 +1,5 @@
-from components.lib.views.ui_view import UiView
-from components.test.test_views.test_api_view import ApiViewTester
+from components.lib.basic_routes.ui_view import UiView
+from components.test.test_basic_routes.test_api_view import ApiViewTester
 from components.utils.extensions import hash_gen
 
 

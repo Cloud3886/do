@@ -10,10 +10,10 @@ from flask import (
 )
 from flask.globals import app_ctx
 from flask.views import MethodView
-from components.lib.database_manager import DatabaseManager
+from components.lib.database_manager.database_manager import DatabaseManager
 
-from components.lib.views.ui_view import UiView
-from components.lib.app_route import AppRoute
+from components.lib.basic_routes.ui_view import UiView
+from components.lib.basic_routes.app_route import AppRoute
 from components.utils.extensions import prettify
 
 

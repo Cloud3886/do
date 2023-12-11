@@ -1,6 +1,6 @@
 from copy import deepcopy
 from functools import wraps
-from .ui_view import UiView
+from ..basic_routes.ui_view import UiView
 
 
 class OpenapiView(UiView):
