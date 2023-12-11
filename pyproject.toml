@@ -1,8 +1,16 @@
 [tool.poetry]
+name = "components"
+version = "0.1.0"
+description = ""
+authors = []
 packages = [{include = "components"}]
 
 [tool.poetry.dependencies]
 python = "^3.12"
+pytest = "^7.4.3"
+flask = "^3.0.0"
+flask-smorest = "^0.42.3"
+sqlalchemy = "^2.0.23"
 
 [build-system]
 requires = ["poetry-core"]
