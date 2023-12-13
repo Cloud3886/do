@@ -1,19 +1,16 @@
-import json
+import marshmallow as ma
 import pytest
 from flask import Flask
 from flask_smorest import Api
-import marshmallow as ma
+
 from components.lib.database_manager.database_manager import DatabaseManager
-
-from components.lib.smorest_router.smorest_router import SmorestConfig, SmorestRouter
 from components.lib.smorest_router.openapi_view import OpenapiView
-
+from components.lib.smorest_router.smorest_router import SmorestConfig, SmorestRouter
 from components.test._components._testers import InstanceTester
-from components.utils.extensions import prettify
-from ..test_flask_router.test_flask_router import TestFlaskRouter as FlaskRouterTester
 from components.test.test_basic_routes.test_app_route import AppRouteTester
 from components.test.test_smorest_router.test_openapi_view import OpenapiViewTester
 
+from ..test_flask_router.test_flask_router import TestFlaskRouter as FlaskRouterTester
 
 create_view = OpenapiViewTester.create_view
 create_route = AppRouteTester.create_route
