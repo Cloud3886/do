@@ -1,5 +1,6 @@
 import marshmallow as ma
 import pytest
+import sqlalchemy.util as sql_tools
 from flask import Flask
 from flask_smorest import Api
 
@@ -65,8 +66,13 @@ class TestSmorestRouter(FlaskRouterTester):
 
     def test_router_with_database(self):
         router = SmorestRouter("test_router", DB_URI="sqlite:///")
+        router.register_view(create_view("/"))
         assert isinstance(router.db_manager, DatabaseManager)
-        assert router.app.session
+        assert isinstance(router.app.session.registry, sql_tools.ScopedRegistry)
+
+        router.app.test_client().get("/")
+
+        router.app.test_client().get("/")
 
     def test_router_initialization(self):
         view1 = create_view("/")

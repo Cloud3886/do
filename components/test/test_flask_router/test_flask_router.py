@@ -1,14 +1,14 @@
 import pytest
-from flask import Flask
-from components.lib.database_manager.database_manager import DatabaseManager
-
+import sqlalchemy.util as sql_tools
+from flask import Flask, request
+from flask.testing import FlaskClient
 
 from components.lib.basic_routes.ui_view import UiView
+from components.lib.database_manager.database_manager import DatabaseManager
 from components.lib.flask_router.flask_router import FlaskRouter
-
-from components.test.test_basic_routes.test_ui_view import UiViewTester
-from components.test.test_basic_routes.test_app_route import AppRouteTester
 from components.test._components._testers import ClassTester
+from components.test.test_basic_routes.test_app_route import AppRouteTester
+from components.test.test_basic_routes.test_ui_view import UiViewTester
 
 create_view = UiViewTester.create_view
 create_route = AppRouteTester.create_route
@@ -22,7 +22,7 @@ class TestFlaskRouter(ClassTester):
 
     @pytest.fixture
     def client(self, router: FlaskRouter):
-        return router.app.test_client()
+        return router.tester()
 
     def test_router(self):
         router = FlaskRouter("test_router")
@@ -31,8 +31,13 @@ class TestFlaskRouter(ClassTester):
 
     def test_router_with_database(self):
         router = FlaskRouter("test_router", DB_URI="sqlite:///")
+        router.register_view(create_view("/"))
         assert isinstance(router.db_manager, DatabaseManager)
-        assert router.app.session
+        assert isinstance(router.app.session.registry, sql_tools.ScopedRegistry)
+
+        router.app.test_client().get("/")
+
+        router.app.test_client().get("/")
 
     # def test_run(self, router: FlaskRouter):
     #     router.register_view(create_view("/"))
@@ -44,6 +49,17 @@ class TestFlaskRouter(ClassTester):
 
     def test_router_registered_teardown_appcontext(self, router: FlaskRouter):
         assert len(router.app.teardown_appcontext_funcs) >= 1
+
+    def test_router_tester(self, router: FlaskRouter):
+        assert not router.app.testing
+
+        with router.tester() as tester:
+            assert isinstance(tester, FlaskClient)
+            assert router.app.testing
+            tester.get("/?vodka=42")
+            assert request.args["vodka"] == "42"
+
+        assert not router.app.testing
 
     def test_view_at_index(self, router: FlaskRouter):
         router.register_view(create_view("/"))

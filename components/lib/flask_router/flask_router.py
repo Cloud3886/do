@@ -1,19 +1,21 @@
+from contextlib import contextmanager
 from typing import Any, Callable
 
 import flask.typing as ft
 from flask import (
     Blueprint,
     Flask,
+    current_app,
     jsonify,
     render_template,
-    current_app,
 )
 from flask.globals import app_ctx
+from flask.testing import FlaskClient
 from flask.views import MethodView
-from components.lib.database_manager.database_manager import DatabaseManager
 
-from components.lib.basic_routes.ui_view import UiView
 from components.lib.basic_routes.app_route import AppRoute
+from components.lib.basic_routes.ui_view import UiView
+from components.lib.database_manager.database_manager import DatabaseManager
 from components.utils.extensions import prettify
 
 
@@ -144,6 +146,15 @@ class FlaskRouter:
     def register_teardown_appcontext(self, teardown: Teardown):
         self._teardown_appcontext.append(teardown)
         return teardown
+
+    @contextmanager
+    def tester(self, handle_exception=True):
+        if handle_exception:
+            self.app.testing = True
+        with self.app.test_client() as tester:
+            yield tester
+        if handle_exception:
+            self.app.testing = False
 
     def _configure_db(self, DB_URI: str):
         if self.db_manager:
