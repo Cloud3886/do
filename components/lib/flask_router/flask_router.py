@@ -10,13 +10,11 @@ from flask import (
     render_template,
 )
 from flask.globals import app_ctx
-from flask.testing import FlaskClient
 from flask.views import MethodView
 
 from components.lib.basic_routes.app_route import AppRoute
 from components.lib.basic_routes.ui_view import UiView
 from components.lib.database_manager.database_manager import DatabaseManager
-from components.utils.extensions import prettify
 
 
 class FlaskViewAdapter:
@@ -24,11 +22,39 @@ class FlaskViewAdapter:
         self.view = view
 
     def build_view_class(self) -> type[MethodView]:
+        view_class = self._create_adapted_view_class()
+        view_class.initialize(self.view)
+        return view_class
+
+    def build_view_function(self) -> ft.RouteCallable:
+        return self.build_view_class().as_view(self.view.name)
+
+    def _create_adapted_view_class(self) -> type[MethodView]:
         class AdaptedView(MethodView):
             __name__ = self.view.name
             init_every_request = self.view.reloads
             view = self.view
             adapter = self
+
+            def reinitialize(self):
+                re_view = self.view.__class__(
+                    *self.view._class_args, **self.view._class_kwargs
+                )
+                self.initialize(re_view)
+
+            @classmethod
+            def initialize(cls, view: UiView):
+                cls.adapter._build_internal_view(view)
+                cls.adapter.view = view
+                cls.view = view
+                cls._configure_methods()
+
+            @classmethod
+            def _configure_methods(cls):
+                methods = cls.view._view_methods()
+                for call in methods:
+                    setattr(cls, call, methods[call])
+                cls.methods = set(map(lambda o: o.upper(), methods.keys()))
 
             @classmethod
             def as_view(
@@ -41,7 +67,7 @@ class FlaskViewAdapter:
                 if cls.init_every_request:
 
                     def view(**kwargs: Any) -> ft.ResponseReturnValue:
-                        self.adapter.reinitialize(self, self.view)
+                        self.reinitialize()
                         return current_app.ensure_sync(self.dispatch_request)(**kwargs)
 
                 else:
@@ -65,28 +91,10 @@ class FlaskViewAdapter:
                 view.provide_automatic_options = cls.provide_automatic_options
                 return view
 
-        self.initialize(AdaptedView, self.view)
         return AdaptedView
 
-    def build_view_function(self) -> ft.RouteCallable:
-        return self.build_view_class().as_view(self.view.name)
-
-    @classmethod
-    def reinitialize(cls, self, view: UiView):
-        re_view = view.__class__(*view._class_args, **view._class_kwargs)
-        cls.initialize(self, re_view)
-
-    @classmethod
-    def initialize(cls, self, view: UiView):
-        cls._build_internal_view(view)
-        self.view = view
-        methods = self.view._view_methods()
-        for call in methods:
-            setattr(self, call, methods[call])
-        self.methods = set(map(lambda o: o.upper(), methods.keys()))
-
-    @classmethod
-    def _build_internal_view(cls, view: UiView):
+    @staticmethod
+    def _build_internal_view(view: UiView):
         view._build(serialize=jsonify, render_template=render_template)
 
 
@@ -105,7 +113,7 @@ class FlaskRouter:
         self.app = self.create_app(name)
         self.db_manager = None
         self._teardown_appcontext_registered = False
-        self._teardown_appcontext: list[Teardown] = []
+        self._teardown_appcontext: dict[str, Teardown] = {}
 
         if DB_URI:
             self._configure_db(DB_URI)
@@ -118,7 +126,7 @@ class FlaskRouter:
             for route in routes:
                 self.register_route(route)
 
-        self._register_teardown_appcontext_with_flask()
+        self._register_teardown_appcontext_callback_with_app()
 
     @staticmethod
     def create_app(name: str):
@@ -143,44 +151,21 @@ class FlaskRouter:
         bp = self._configure_route(route)
         (main or self.app).register_blueprint(bp)
 
-    def register_teardown_appcontext(self, teardown: Teardown):
-        self._teardown_appcontext.append(teardown)
-        return teardown
+    def register_teardown_appcontext(self, key: str, teardown: Teardown):
+        self._teardown_appcontext[key] = teardown
 
     @contextmanager
-    def tester(self, handle_exception=True):
-        if handle_exception:
-            self.app.testing = True
+    def tester(self):
+        self.app.testing = True
         with self.app.test_client() as tester:
             yield tester
-        if handle_exception:
-            self.app.testing = False
+        self.app.testing = False
 
     def _configure_db(self, DB_URI: str):
-        if self.db_manager:
-            return
-
-        self.db_manager = DatabaseManager(DB_URI)
-
-        def get_app_ctx() -> int:
-            return id(app_ctx._get_current_object())
-
-        self.app.session = self.db_manager.configure_scoped_session(get_app_ctx)
-
-        @self.register_teardown_appcontext
-        def remove_session(app: Flask):
-            app.session.remove()
-
-    def _register_teardown_appcontext_with_flask(self):
-        if self._teardown_appcontext_registered:
-            return
-
-        @self.app.teardown_appcontext
-        def _teardown_appcontext(*args, **kwargs):
-            for teardown in self._teardown_appcontext:
-                teardown(self.app)
-
-        self._teardown_appcontext_registered = True
+        if not self.db_manager:
+            self.db_manager = DatabaseManager(DB_URI)
+            self._configure_db_session_with_flask(self.db_manager)
+            self._connect_db_session_with_app()
 
     def _configure_route(self, route: AppRoute[UiView]) -> Blueprint:
         bp = self._create_blueprint(route)
@@ -188,10 +173,38 @@ class FlaskRouter:
         for view in route.views:
             self.register_view(view, bp)
 
-        for route in route.routes:
-            self.register_route(route, bp)
+        for nested_route in route.routes:
+            self.register_route(nested_route, bp)
 
         return bp
+
+    def _register_teardown_appcontext_callback_with_app(self):
+        if not self._teardown_appcontext_registered:
+            teardown_callback = self._create_teardown_appcontext_callback()
+            self.app.teardown_appcontext(teardown_callback)
+            self._teardown_appcontext_registered = True
+
+    @classmethod
+    def _configure_db_session_with_flask(cls, db_manager: DatabaseManager):
+        def get_flask_app_ctx() -> int:
+            return id(app_ctx._get_current_object())
+
+        db_manager.configure_scoped_session(get_flask_app_ctx)
+
+    def _connect_db_session_with_app(self):
+        self.app.session = self.db_manager.SessionScoped
+
+        def remove_session(app: Flask):
+            app.session.remove()
+
+        self.register_teardown_appcontext("remove_session", remove_session)
+
+    def _create_teardown_appcontext_callback(self):
+        def _teardown_appcontext(*args, **kwargs):
+            for teardown in self._teardown_appcontext.values():
+                teardown(self.app)
+
+        return _teardown_appcontext
 
     def _create_adapter(self, view: UiView) -> FlaskViewAdapter:
         return FlaskViewAdapter(view)

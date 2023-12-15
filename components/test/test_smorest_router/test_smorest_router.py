@@ -10,6 +10,7 @@ from components.lib.smorest_router.smorest_router import SmorestConfig, SmorestR
 from components.test._components._testers import InstanceTester
 from components.test.test_basic_routes.test_app_route import AppRouteTester
 from components.test.test_smorest_router.test_openapi_view import OpenapiViewTester
+from components.utils.extensions import prettify
 
 from ..test_flask_router.test_flask_router import TestFlaskRouter as FlaskRouterTester
 
@@ -54,10 +55,6 @@ class TestSmorestRouter(FlaskRouterTester):
     def router(self) -> SmorestRouter:
         router = SmorestRouter(__name__)
         return router
-
-    @pytest.fixture
-    def client(self, router: SmorestRouter):
-        return router.app.test_client()
 
     def test_router(self):
         router = SmorestRouter("test")
@@ -181,8 +178,12 @@ class TestSmorestRouter(FlaskRouterTester):
     def test_register_route_with_api(self, router: SmorestRouter):
         api = router.add_api(SmorestConfigTester.create_smorest_config())
         router.register_route_with_api(api, create_route([create_view("/")]))
+        router.register_route_with_api(
+            api, create_route([create_view("/")], prefix="/nest")
+        )
 
         assert router.app.test_client().get("/").status_code == 200
+        assert router.app.test_client().get("/nest/").status_code == 200
 
     def test_view_decorators(self, router: SmorestRouter):
         class One(ma.Schema):
@@ -205,7 +206,7 @@ class TestSmorestRouter(FlaskRouterTester):
 
             @OpenapiView.arguments(One)
             @OpenapiView.arguments(Two)
-            @OpenapiView.alt_response(201, schema=Two)
+            @OpenapiView.alt_response(202, schema=Two)
             @OpenapiView.response(201, One)
             def post(self, *args):
                 """Post Testing"""
@@ -216,10 +217,18 @@ class TestSmorestRouter(FlaskRouterTester):
         )
 
         openapi_json: dict = api.spec.to_dict()
-        # print(prettify(openapi_json))
+        print(prettify(openapi_json))
 
+        # Test Arguments
         assert "One" in openapi_json["components"]["schemas"]
         assert "Two" in openapi_json["components"]["schemas"]
+
+        # Test Alt Response
+        assert "202" in openapi_json["paths"]["/"]["post"]["responses"]
+
+        # Test Response
+        assert "200" in openapi_json["paths"]["/"]["get"]["responses"]
+        assert "201" in openapi_json["paths"]["/"]["post"]["responses"]
 
         assert openapi_json["paths"]["/"]["get"]["summary"] == "Get Testing"
         assert openapi_json["paths"]["/"]["post"]["summary"] == "Post Testing"

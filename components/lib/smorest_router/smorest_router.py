@@ -1,13 +1,13 @@
 from flask.views import MethodView
-from flask_smorest import Blueprint, Api
+from flask_smorest import Api, Blueprint
 
+from components.lib.basic_routes.app_route import AppRoute
+from components.lib.basic_routes.ui_view import UiView
 from components.lib.flask_router.flask_router import (
     FlaskRouter,
     FlaskViewAdapter,
 )
 from components.lib.smorest_router.openapi_view import OpenapiView
-from components.lib.basic_routes.app_route import AppRoute
-from components.lib.basic_routes.ui_view import UiView
 from components.utils.extensions import prettify
 
 
@@ -56,25 +56,27 @@ class SmorestViewAdapter(FlaskViewAdapter):
 
     def _init_docs(self):
         methods = self.view._view_methods()
-        for call in methods:
-            call_method = methods[call]
-            call_viewdoc: dict = getattr(call_method, "_viewdoc", None)
-            blueprint = self.blueprint
+        for call, call_method in methods.items():
+            self._init_docs_for_call_method(call, call_method)
 
-            if call_viewdoc and blueprint:
-                call_method = self._add_apidoc(
-                    "response", call_viewdoc, call_method, blueprint
-                )
-                call_method = self._add_apidoc(
-                    "alt_response", call_viewdoc, call_method, blueprint
-                )
-                call_method = self._add_apidoc(
-                    "arguments", call_viewdoc, call_method, blueprint
-                )
-            setattr(self.view, call, call_method)
+    def _init_docs_for_call_method(self, call: str, call_method):
+        call_viewdoc: dict = getattr(call_method, "_viewdoc", None)
+        blueprint = self.blueprint
+
+        if call_viewdoc and blueprint:
+            call_method = self._add_calldocs(call_viewdoc, call_method, blueprint)
+
+        setattr(self.view, call, call_method)
+
+    def _add_calldocs(self, viewdoc: dict, call_method, blueprint: Blueprint):
+        arg = (viewdoc, blueprint)
+        call_method = self._add_apidoc("response", *arg, call_method)
+        call_method = self._add_apidoc("alt_response", *arg, call_method)
+        call_method = self._add_apidoc("arguments", *arg, call_method)
+        return call_method
 
     @staticmethod
-    def _add_apidoc(decoration: str, viewdoc: dict, call_method, blueprint: Blueprint):
+    def _add_apidoc(decoration: str, viewdoc: dict, blueprint: Blueprint, call_method):
         docs: list[dict] = viewdoc.get(decoration)
         if docs:
             for doc in docs:
@@ -101,9 +103,9 @@ class SmorestRouter(FlaskRouter):
 
     def register_view(self, view: UiView, main: Blueprint = None):
         adapter = self._create_adapter(view, main)
-        view_func = adapter.build_view_function()
-        if main:
-            view_func = adapter.build_view_class()
+        view_func = (
+            adapter.build_view_class() if main else adapter.build_view_function()
+        )
         (main or self.app).add_url_rule(view.endpoint, view.name, view_func=view_func)
 
     def _create_adapter(
@@ -125,12 +127,27 @@ class SmorestRouter(FlaskRouter):
 
     def register_route_with_api(self, api: Api, route: AppRoute[OpenapiView]) -> None:
         config = self.apis[api]
-        if config.OPENAPI_URL_PREFIX and config.OPENAPI_URL_PREFIX != "/":
+
+        config_has_prefix = (
+            config.OPENAPI_URL_PREFIX and config.OPENAPI_URL_PREFIX != "/"
+        )
+        if config_has_prefix:
             route.prefix = config.OPENAPI_URL_PREFIX + (route.prefix or "")
+
         bp = self._configure_route(route)
         api.register_blueprint(bp)
 
     def add_api(self, config: SmorestConfig, routes: list[AppRoute[OpenapiView]] = []):
+        self._register_openapi_config_with_app(config)
+        api = self._create_openapi(config)
+        self._record_openapi(api, config)
+
+        for route in routes:
+            self.register_route_with_api(api, route)
+
+        return api
+
+    def _register_openapi_config_with_app(self, config: SmorestConfig):
         name_prefix = (config.name.upper() + "_") if config.name else ""
         self.app.config[name_prefix + "OPENAPI_URL_PREFIX"] = (
             config.OPENAPI_URL_PREFIX or "/"
@@ -150,6 +167,14 @@ class SmorestRouter(FlaskRouter):
             name_prefix + "OPENAPI_RAPIDOC_URL"
         ] = config.OPENAPI_RAPIDOC_URL
 
+    def _record_openapi(self, api: Api, config: SmorestConfig):
+        self.apis[api] = config
+        if config.name:
+            setattr(self, f"api_{config.name.lower()}", api)
+        else:
+            self.api = api
+
+    def _create_openapi(self, config: SmorestConfig):
         api = Api(
             self.app,
             config_prefix=config.name.upper(),
@@ -159,17 +184,4 @@ class SmorestRouter(FlaskRouter):
                 "openapi_version": config.OPENAPI_VERSION,
             },
         )
-
-        self.apis[api] = config
-        if config.name:
-            setattr(self, f"api_{config.name.lower()}", api)
-        else:
-            self.api = api
-
-        for route in routes:
-            if config.OPENAPI_URL_PREFIX and config.OPENAPI_URL_PREFIX != "/":
-                route.prefix = config.OPENAPI_URL_PREFIX + (route.prefix or "")
-            bp = self._configure_route(route)
-            api.register_blueprint(bp)
-
         return api

@@ -20,10 +20,6 @@ class TestFlaskRouter(ClassTester):
         router = FlaskRouter(__name__)
         return router
 
-    @pytest.fixture
-    def client(self, router: FlaskRouter):
-        return router.tester()
-
     def test_router(self):
         router = FlaskRouter("test_router")
         assert isinstance(router.app, Flask)
