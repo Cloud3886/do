@@ -4,7 +4,7 @@ from flask import Flask, request
 from flask.testing import FlaskClient
 
 from components.lib.basic_routes.ui_view import UiView
-from components.lib.database_manager.database_manager import DatabaseManager
+from components.lib.database_manager import DatabaseManager
 from components.lib.flask_router.flask_router import FlaskRouter
 from components.test._components._testers import ClassTester
 from components.test.test_basic_routes.test_app_route import AppRouteTester

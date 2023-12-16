@@ -1,4 +1,4 @@
-from components.lib.smorest_router.openapi_view import OpenapiView
+from components.lib.smorest_router import OpenapiView
 from components.test.test_basic_routes.test_ui_view import UiViewTester
 from components.utils.extensions import hash_gen
 

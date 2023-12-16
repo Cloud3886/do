@@ -4,9 +4,8 @@ import sqlalchemy.util as sql_tools
 from flask import Flask
 from flask_smorest import Api
 
-from components.lib.database_manager.database_manager import DatabaseManager
-from components.lib.smorest_router.openapi_view import OpenapiView
-from components.lib.smorest_router.smorest_router import SmorestConfig, SmorestRouter
+from components.lib.database_manager import DatabaseManager
+from components.lib.smorest_router import OpenapiView, SmorestConfig, SmorestRouter
 from components.test._components._testers import InstanceTester
 from components.test.test_basic_routes.test_app_route import AppRouteTester
 from components.test.test_smorest_router.test_openapi_view import OpenapiViewTester
