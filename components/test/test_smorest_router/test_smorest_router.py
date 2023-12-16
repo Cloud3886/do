@@ -18,6 +18,9 @@ create_view = OpenapiViewTester.create_view
 create_route = AppRouteTester.create_route
 
 
+# ------------------------------------------------------------------------------
+# Testers
+# ------------------------------------------------------------------------------
 class SmorestConfigTester(InstanceTester):
     def __init__(self, config: SmorestConfig) -> None:
         self.config = config
@@ -48,6 +51,14 @@ class SmorestConfigTester(InstanceTester):
             url_prefix="/" + (name or ""),
             swagger_ui=ui,
         )
+
+
+# ------------------------------------------------------------------------------
+# Test Cases
+# ------------------------------------------------------------------------------
+def test_smorest_config():
+    config = SmorestConfigTester.create_smorest_config()
+    SmorestConfigTester(config).test()
 
 
 class TestSmorestRouter(FlaskRouterTester):

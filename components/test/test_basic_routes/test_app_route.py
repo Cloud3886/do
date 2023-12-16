@@ -1,15 +1,17 @@
 from typing import TypeVar
 
-
-from components.test._components._testers import InstanceTester
 from components.lib.basic_routes.api_view import ApiView
 from components.lib.basic_routes.app_route import AppRoute
-
+from components.test._components._testers import InstanceTester
+from components.test.test_basic_routes.test_api_view import ApiViewTester
 from components.utils.extensions import hash_gen
 
 T = TypeVar("T", bound=ApiView)
 
 
+# ------------------------------------------------------------------------------
+# Testers
+# ------------------------------------------------------------------------------
 class AppRouteTester(InstanceTester):
     def __init__(self, route: AppRoute) -> None:
         self.route = route
@@ -77,3 +79,37 @@ class AppRouteTester(InstanceTester):
             routes = nested_routes
 
         return TRoute()
+
+
+# ------------------------------------------------------------------------------
+# Test Cases
+# ------------------------------------------------------------------------------
+def test_app_route():
+    route = AppRouteTester.create_route([ApiViewTester.create_view("/")])
+    route2 = AppRouteTester.create_route(
+        [ApiViewTester.create_view("/")], routes=[route], prefix="/nest"
+    )
+
+    test1 = AppRouteTester(route)
+    test1.test()
+    assert test1.has_view_test("/")
+    assert not test1.has_view_test("/no")
+    assert not test1.has_route_test()
+
+    test2 = AppRouteTester(route2)
+    test2.test()
+    assert test2.has_route_test()
+    assert test2.has_view_test("/")
+
+
+def test_parse_routes():
+    route = AppRouteTester.create_route([ApiViewTester.create_view("/one")])
+    route2 = AppRouteTester.create_route(
+        [ApiViewTester.create_view("/")], routes=[route], prefix="/nest"
+    )
+
+    map = AppRouteTester.parse_multiple_routes([route, route2])
+
+    assert "/one" in map
+    assert "/nest/" in map
+    assert "/nest/one" in map

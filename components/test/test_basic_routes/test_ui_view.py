@@ -10,6 +10,12 @@ class UiViewTester(ApiViewTester):
     def __init__(self, view: UiView) -> None:
         self.view = view
 
+    def test_serialize(self):
+        self.view.serialize("data")
+
+    def test_render_template(self):
+        self.view.render_template("template")
+
     def test_view_building(self):
         def serialize(data):
             pass
@@ -44,13 +50,6 @@ class UiViewTester(ApiViewTester):
 # ------------------------------------------------------------------------------
 # Test Cases
 # ------------------------------------------------------------------------------
-def test_view_helpers():
-    view = UiViewTester.create_view("/")
-
-    assert view.serialize
-    assert view.render_template
-
-
 def test_ui_view():
     class ParamUiView(UiView):
         name = "test"
@@ -60,8 +59,12 @@ def test_ui_view():
             super().__init__()
             self.store_args(something)
 
-        def get(self):
-            return self.serialize("testing")
-
     view = ParamUiView("")
     UiViewTester(view).test()
+
+
+def test_view_helpers():
+    view = UiViewTester.create_view("/")
+
+    assert view.serialize
+    assert view.render_template

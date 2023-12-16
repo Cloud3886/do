@@ -1,6 +1,5 @@
 from typing import Any
 
-
 http_methods = frozenset(
     ["get", "post", "head", "options", "delete", "put", "trace", "patch"]
 )
