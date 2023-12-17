@@ -2,7 +2,7 @@ from flask_smorest import Api, Blueprint
 
 from components.lib.basic_routes.app_route import AppRoute
 from components.lib.basic_routes.ui_view import UiView
-from components.lib.flask_router import FlaskRouter
+from components.lib.routers.flask_router import FlaskRouter
 
 from .openapi_view import OpenapiView
 from .smorest_config import SmorestConfig
@@ -14,16 +14,18 @@ class SmorestRouter(FlaskRouter):
         self,
         name: str,
         *,
-        views: list[UiView] = None,
-        routes: list[AppRoute[UiView]] = None,
-        openapi_spec: dict[SmorestConfig, list[AppRoute[OpenapiView]]] = None,
+        views: list[UiView] | None = None,
+        routes: list[AppRoute[UiView]] | None = None,
+        openapi_spec: dict[SmorestConfig, list[AppRoute[OpenapiView]]] | None = None,
         DB_URI: str | None = None,
     ) -> None:
-        super().__init__(name, views=views, routes=routes, DB_URI=DB_URI)
-        self.apis: dict[Api, SmorestConfig] = {}
-        if openapi_spec:
-            for config, routes in openapi_spec.items():
-                self.add_api(config, routes)
+        self._initialize_app(name)
+        self._initialize_fields()
+        self._initialize_db(DB_URI)
+        self._initialize_views(views)
+        self._initialize_routes(routes)
+        self._initialize_openapi_specs(openapi_spec)
+        self._initialize_teardowns()
 
     def register_view(self, view: UiView, main: Blueprint = None):
         adapter = self._create_adapter(view, main)
@@ -32,44 +34,43 @@ class SmorestRouter(FlaskRouter):
         )
         (main or self.app).add_url_rule(view.endpoint, view.name, view_func=view_func)
 
-    def _create_adapter(
-        self,
-        view: UiView,
-        blueprint: Blueprint = None,
-    ) -> SmorestViewAdapter:
-        return SmorestViewAdapter(view, blueprint)
-
-    def _create_blueprint(self, route: AppRoute) -> Blueprint:
-        bp = Blueprint(
-            name=route.name,
-            import_name=route._root,
-            url_prefix=route.prefix,
-            template_folder=route.template_path,
-            subdomain=route.subdomain,
-        )
-        return bp
-
     def register_route_with_api(self, api: Api, route: AppRoute[OpenapiView]) -> None:
         config = self.apis[api]
-
-        config_has_prefix = (
-            config.OPENAPI_URL_PREFIX and config.OPENAPI_URL_PREFIX != "/"
-        )
-        if config_has_prefix:
-            route.prefix = config.OPENAPI_URL_PREFIX + (route.prefix or "")
-
+        self._prepend_config_prefix_to_route(config, route)
         bp = self._configure_route(route)
         api.register_blueprint(bp)
 
     def add_api(self, config: SmorestConfig, routes: list[AppRoute[OpenapiView]] = []):
         self._register_openapi_config_with_app(config)
         api = self._create_openapi(config)
-        self._record_openapi(api, config)
+        self._store_openapi(api, config)
 
         for route in routes:
             self.register_route_with_api(api, route)
 
         return api
+
+    def _initialize_fields(self):
+        super()._initialize_fields()
+        self.apis: dict[Api, SmorestConfig] = {}
+
+    def _initialize_openapi_specs(
+        self, openapi_spec: dict[SmorestConfig, list[AppRoute[OpenapiView]]] | None
+    ):
+        if openapi_spec:
+            for config, routes in openapi_spec.items():
+                self.add_api(config, routes)
+
+    def _prepend_config_prefix_to_route(
+        self,
+        config: SmorestConfig,
+        route: AppRoute[OpenapiView],
+    ):
+        config_has_prefix = (
+            config.OPENAPI_URL_PREFIX and config.OPENAPI_URL_PREFIX != "/"
+        )
+        if config_has_prefix:
+            route.prefix = config.OPENAPI_URL_PREFIX + (route.prefix or "")
 
     def _register_openapi_config_with_app(self, config: SmorestConfig):
         name_prefix = (config.name.upper() + "_") if config.name else ""
@@ -91,7 +92,7 @@ class SmorestRouter(FlaskRouter):
             name_prefix + "OPENAPI_RAPIDOC_URL"
         ] = config.OPENAPI_RAPIDOC_URL
 
-    def _record_openapi(self, api: Api, config: SmorestConfig):
+    def _store_openapi(self, api: Api, config: SmorestConfig):
         self.apis[api] = config
         if config.name:
             setattr(self, f"api_{config.name.lower()}", api)
@@ -109,3 +110,20 @@ class SmorestRouter(FlaskRouter):
             },
         )
         return api
+
+    def _create_adapter(
+        self,
+        view: UiView,
+        blueprint: Blueprint = None,
+    ) -> SmorestViewAdapter:
+        return SmorestViewAdapter(view, blueprint)
+
+    def _create_blueprint(self, route: AppRoute) -> Blueprint:
+        bp = Blueprint(
+            name=route.name,
+            import_name=route._root,
+            url_prefix=route.prefix,
+            template_folder=route.template_path,
+            subdomain=route.subdomain,
+        )
+        return bp

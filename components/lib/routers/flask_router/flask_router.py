@@ -1,5 +1,4 @@
-from contextlib import contextmanager
-from typing import Any, Callable
+from typing import Any
 
 from flask import (
     Blueprint,
@@ -10,12 +9,11 @@ from flask.globals import app_ctx
 from components.lib.basic_routes.app_route import AppRoute
 from components.lib.basic_routes.ui_view import UiView
 from components.lib.database_manager import DatabaseManager
-from components.lib.router import Router
+from components.lib.routers.router import Router
+from components.lib.routers.teardown_recorder import Teardown, TeardownRecorder
 
 from .flask_test_client import FlaskRouterTester
 from .flask_view_adapter import FlaskViewAdapter
-
-Teardown = Callable[[Flask], None]
 
 
 class FlaskRouter(Router):
@@ -23,28 +21,16 @@ class FlaskRouter(Router):
         self,
         name: str,
         *,
-        views: list[UiView] = None,
-        routes: list[AppRoute[UiView]] = None,
+        views: list[UiView] | None = None,
+        routes: list[AppRoute[UiView]] | None = None,
         DB_URI: str | None = None,
     ) -> None:
-        self.app = self.create_app(name)
-        self.db_manager = None
-        self._teardown_appcontext_registered = False
-        self._teardown_appcontext: dict[str, Teardown] = {}
-        self.app.test_client_class = FlaskRouterTester
-
-        if DB_URI:
-            self._configure_db(DB_URI)
-
-        if views:
-            for view in views:
-                self.register_view(view)
-
-        if routes:
-            for route in routes:
-                self.register_route(route)
-
-        self._register_teardown_appcontext_callback_with_app()
+        self._initialize_app(name)
+        self._initialize_fields()
+        self._initialize_db(DB_URI)
+        self._initialize_views(views)
+        self._initialize_routes(routes)
+        self._initialize_teardowns()
 
     @staticmethod
     def create_app(name: str):
@@ -60,6 +46,9 @@ class FlaskRouter(Router):
     ):
         self.app.run(host, port, debug, load_dotenv, **options)
 
+    def tester(self):
+        return self.app.test_client()
+
     def register_view(self, view: UiView, main: Blueprint = None):
         adapter = self._create_adapter(view)
         view_func = adapter.build_view_function()
@@ -70,10 +59,35 @@ class FlaskRouter(Router):
         (main or self.app).register_blueprint(bp)
 
     def register_teardown_appcontext(self, key: str, teardown: Teardown):
-        self._teardown_appcontext[key] = teardown
+        self._teardown_appcontext.record_teardown(key, teardown)
 
-    def tester(self):
-        return self.app.test_client()
+    def _initialize_app(self, name: str):
+        self.app = self.create_app(name)
+
+    def _initialize_fields(self):
+        self.db_manager = None
+        self.app.test_client_class = FlaskRouterTester
+        self._teardown_appcontext = TeardownRecorder()
+
+    def _initialize_db(self, DB_URI: str | None):
+        if DB_URI:
+            self._configure_db(DB_URI)
+
+    def _initialize_views(self, views: list[UiView] | None):
+        if views:
+            for view in views:
+                self.register_view(view)
+
+    def _initialize_routes(self, routes: list[AppRoute[UiView]] | None):
+        if routes:
+            for route in routes:
+                self.register_route(route)
+
+    def _initialize_teardowns(self):
+        self._teardown_appcontext.init(
+            registrar=self.app.teardown_appcontext,
+            arg=self.app,
+        )
 
     def _configure_db(self, DB_URI: str):
         if not self.db_manager:
@@ -92,12 +106,6 @@ class FlaskRouter(Router):
 
         return bp
 
-    def _register_teardown_appcontext_callback_with_app(self):
-        if not self._teardown_appcontext_registered:
-            teardown_callback = self._create_teardown_appcontext_callback()
-            self.app.teardown_appcontext(teardown_callback)
-            self._teardown_appcontext_registered = True
-
     @classmethod
     def _configure_db_session_with_flask(cls, db_manager: DatabaseManager):
         def get_flask_app_ctx() -> int:
@@ -112,13 +120,6 @@ class FlaskRouter(Router):
             app.session.remove()
 
         self.register_teardown_appcontext("remove_session", remove_session)
-
-    def _create_teardown_appcontext_callback(self):
-        def _teardown_appcontext(*args, **kwargs):
-            for teardown in self._teardown_appcontext.values():
-                teardown(self.app)
-
-        return _teardown_appcontext
 
     def _create_adapter(self, view: UiView) -> FlaskViewAdapter:
         return FlaskViewAdapter(view)

@@ -5,13 +5,18 @@ from flask import Flask
 from flask_smorest import Api
 
 from components.lib.database_manager import DatabaseManager
-from components.lib.smorest_router import OpenapiView, SmorestConfig, SmorestRouter
+from components.lib.routers.smorest_router import (
+    OpenapiView,
+    SmorestConfig,
+    SmorestRouter,
+)
 from components.test._components._testers import InstanceTester
 from components.test.test_basic_routes.test_app_route import AppRouteTester
+from components.test.test_flask_router.test_flask_router import (
+    TestFlaskRouter as FlaskRouterTester,
+)
 from components.test.test_smorest_router.test_openapi_view import OpenapiViewTester
 from components.utils.extensions import prettify
-
-from ..test_flask_router.test_flask_router import TestFlaskRouter as FlaskRouterTester
 
 create_view = OpenapiViewTester.create_view
 create_route = AppRouteTester.create_route

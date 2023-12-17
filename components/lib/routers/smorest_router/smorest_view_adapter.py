@@ -1,7 +1,7 @@
 from flask_smorest import Blueprint
 
 from components.lib.basic_routes.ui_view import UiView
-from components.lib.flask_router import FlaskViewAdapter
+from components.lib.routers.flask_router import FlaskViewAdapter
 
 
 class SmorestViewAdapter(FlaskViewAdapter):
