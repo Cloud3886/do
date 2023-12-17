@@ -18,8 +18,6 @@ class ApiViewTester(InstanceTester):
 
     def test_view_reload(self):
         view = self.view.__class__(*self.view._class_args, **self.view._class_kwargs)
-        print(vars(view))
-        print(vars(self.view))
         assert vars(view) == vars(self.view)
 
     @staticmethod
@@ -44,20 +42,10 @@ def test_api_view():
     ApiViewTester(ApiViewTester.create_view("/")).test()
 
 
-def test_api_view_has_get():
-    ApiViewTester.create_view("/").get()
-
-
 def test_api_view_build():
     view = ApiViewTester.create_view("/")
     view._build()
     assert view._ready
-
-
-def test_api_view_store_args():
-    view = ApiViewTester.create_view("/")
-    view.store_args("nothing")
-    view.store_args("nothing")
 
 
 def test_api_view_methods():

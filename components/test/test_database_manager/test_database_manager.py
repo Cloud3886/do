@@ -19,3 +19,10 @@ class TestDatabaseManager(ClassTester):
 
     def test_engine_access(self, db: DatabaseManager):
         assert db.engine
+
+    def test_session_factory(self, db: DatabaseManager):
+        assert not db.SessionFactory
+
+        db.configure_session_factory()
+
+        assert db.SessionFactory

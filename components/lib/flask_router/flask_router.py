@@ -12,6 +12,7 @@ from components.lib.basic_routes.ui_view import UiView
 from components.lib.database_manager import DatabaseManager
 from components.lib.router import Router
 
+from .flask_test_client import FlaskRouterTester
 from .flask_view_adapter import FlaskViewAdapter
 
 Teardown = Callable[[Flask], None]
@@ -30,6 +31,7 @@ class FlaskRouter(Router):
         self.db_manager = None
         self._teardown_appcontext_registered = False
         self._teardown_appcontext: dict[str, Teardown] = {}
+        self.app.test_client_class = FlaskRouterTester
 
         if DB_URI:
             self._configure_db(DB_URI)
@@ -70,12 +72,8 @@ class FlaskRouter(Router):
     def register_teardown_appcontext(self, key: str, teardown: Teardown):
         self._teardown_appcontext[key] = teardown
 
-    @contextmanager
     def tester(self):
-        self.app.testing = True
-        with self.app.test_client() as tester:
-            yield tester
-        self.app.testing = False
+        return self.app.test_client()
 
     def _configure_db(self, DB_URI: str):
         if not self.db_manager:
@@ -105,10 +103,10 @@ class FlaskRouter(Router):
         def get_flask_app_ctx() -> int:
             return id(app_ctx._get_current_object())
 
-        db_manager.configure_scoped_session(get_flask_app_ctx)
+        db_manager.configure_session_factory(get_flask_app_ctx)
 
     def _connect_db_session_with_app(self):
-        self.app.session = self.db_manager.SessionScoped
+        self.app.session = self.db_manager.SessionFactory
 
         def remove_session(app: Flask):
             app.session.remove()

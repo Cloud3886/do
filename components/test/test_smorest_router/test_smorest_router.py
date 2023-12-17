@@ -77,9 +77,8 @@ class TestSmorestRouter(FlaskRouterTester):
         assert isinstance(router.db_manager, DatabaseManager)
         assert isinstance(router.app.session.registry, sql_tools.ScopedRegistry)
 
-        router.app.test_client().get("/")
-
-        router.app.test_client().get("/")
+        router.tester().get("/")
+        router.tester().get("/")
 
     def test_router_initialization(self):
         view1 = create_view("/")
@@ -88,9 +87,9 @@ class TestSmorestRouter(FlaskRouterTester):
 
         router = SmorestRouter(__name__, views=[view1, view2], routes=[route1])
 
-        assert router.app.test_client().get("/").status_code == 200
-        assert router.app.test_client().get("/test").status_code == 200
-        assert router.app.test_client().get("/one/").status_code == 200
+        assert router.tester().get("/").status_code == 200
+        assert router.tester().get("/test").status_code == 200
+        assert router.tester().get("/one/").status_code == 200
 
     def test_view_helpers(self, router: SmorestRouter):
         class SomeView(OpenapiView):
@@ -105,8 +104,8 @@ class TestSmorestRouter(FlaskRouterTester):
 
         router.register_view(SomeView())
 
-        assert router.app.test_client().post("/").json == "Success"
-        assert router.app.test_client().get("/").json == "No Data"
+        assert router.tester().post("/").json == "Success"
+        assert router.tester().get("/").json == "No Data"
 
     def test_router_add_api(self, router: SmorestRouter):
         config = SmorestConfigTester.create_smorest_config()
@@ -119,7 +118,7 @@ class TestSmorestRouter(FlaskRouterTester):
         api = router.add_api(config, [create_route([create_view("/")])])
         assert api in router.apis
         assert config == router.apis[api]
-        assert router.app.test_client().get("/").status_code == 200
+        assert router.tester().get("/").status_code == 200
 
     def test_router_multiple_apis(self, router: SmorestRouter):
         api1 = router.add_api(
@@ -142,15 +141,15 @@ class TestSmorestRouter(FlaskRouterTester):
         assert api2 in router.apis
         assert api3 in router.apis
 
-        assert router.app.test_client().get("/").status_code == 200
-        assert router.app.test_client().get("/ui").status_code == 200
+        assert router.tester().get("/").status_code == 200
+        assert router.tester().get("/ui").status_code == 200
 
-        assert router.app.test_client().get("/v1/").status_code == 200
-        assert router.app.test_client().get("/v1/v1/").status_code == 200
-        assert router.app.test_client().get("/v1/ui").status_code == 200
+        assert router.tester().get("/v1/").status_code == 200
+        assert router.tester().get("/v1/v1/").status_code == 200
+        assert router.tester().get("/v1/ui").status_code == 200
 
-        assert router.app.test_client().get("/v2/").status_code == 200
-        assert router.app.test_client().get("/v2/ui").status_code == 200
+        assert router.tester().get("/v2/").status_code == 200
+        assert router.tester().get("/v2/ui").status_code == 200
 
     def test_api_direct_access(self, router: SmorestRouter):
         api1 = router.add_api(SmorestConfigTester.create_smorest_config("v1"), [])
@@ -177,13 +176,13 @@ class TestSmorestRouter(FlaskRouterTester):
             },
         )
 
-        assert router.app.test_client().get("/").status_code == 200
-        assert router.app.test_client().get("/flask/").status_code == 200
-        assert router.app.test_client().get("/v1/").status_code == 200
-        assert router.app.test_client().get("/v1/ui").status_code == 200
-        assert router.app.test_client().get("/v2/").status_code == 200
-        assert router.app.test_client().get("/v2/more/").status_code == 200
-        assert router.app.test_client().get("/v2/ui").status_code == 200
+        assert router.tester().get("/").status_code == 200
+        assert router.tester().get("/flask/").status_code == 200
+        assert router.tester().get("/v1/").status_code == 200
+        assert router.tester().get("/v1/ui").status_code == 200
+        assert router.tester().get("/v2/").status_code == 200
+        assert router.tester().get("/v2/more/").status_code == 200
+        assert router.tester().get("/v2/ui").status_code == 200
 
     def test_register_route_with_api(self, router: SmorestRouter):
         api = router.add_api(SmorestConfigTester.create_smorest_config())
@@ -192,8 +191,8 @@ class TestSmorestRouter(FlaskRouterTester):
             api, create_route([create_view("/")], prefix="/nest")
         )
 
-        assert router.app.test_client().get("/").status_code == 200
-        assert router.app.test_client().get("/nest/").status_code == 200
+        assert router.tester().get("/").status_code == 200
+        assert router.tester().get("/nest/").status_code == 200
 
     def test_view_decorators(self, router: SmorestRouter):
         class One(ma.Schema):

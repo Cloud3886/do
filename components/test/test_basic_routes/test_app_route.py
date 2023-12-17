@@ -24,19 +24,22 @@ class AppRouteTester(InstanceTester):
         if self.route.prefix:
             assert self.route.prefix.startswith("/")
 
-    def has_route_test(self, prefix: str = None):
+    def has_route(self, prefix: str = None):
         for route in self.route.routes:
             if route.prefix == prefix:
                 return True
 
         return False
 
-    def has_view_test(self, prefix: str = None) -> bool:
+    def has_view(self, prefix: str = None) -> bool:
         for view in self.route.views:
             if view.endpoint == prefix:
                 return True
 
         return False
+
+    def has_endpoint(self, endpoint: str) -> bool:
+        return endpoint in self.parse_route(self.route)
 
     @classmethod
     def parse_route(cls, route: AppRoute) -> list[str]:
@@ -51,13 +54,13 @@ class AppRouteTester(InstanceTester):
 
         return route_map
 
-    @classmethod
-    def parse_multiple_routes(cls, routes: list[AppRoute]) -> list[str]:
-        route_map: list[str] = []
-        for route in routes:
-            route_map.extend(cls.parse_route(route))
+    # @classmethod
+    # def parse_multiple_routes(cls, routes: list[AppRoute]) -> list[str]:
+    #     route_map: list[str] = []
+    #     for route in routes:
+    #         route_map.extend(cls.parse_route(route))
 
-        return list(filter(None, route_map))
+    #     return list(filter(None, route_map))
 
     @staticmethod
     def create_route(
@@ -92,14 +95,14 @@ def test_app_route():
 
     test1 = AppRouteTester(route)
     test1.test()
-    assert test1.has_view_test("/")
-    assert not test1.has_view_test("/no")
-    assert not test1.has_route_test()
+    assert test1.has_view("/")
+    assert not test1.has_view("/no")
+    assert not test1.has_route()
 
     test2 = AppRouteTester(route2)
     test2.test()
-    assert test2.has_route_test()
-    assert test2.has_view_test("/")
+    assert test2.has_route()
+    assert test2.has_view("/")
 
 
 def test_parse_routes():
@@ -108,8 +111,6 @@ def test_parse_routes():
         [ApiViewTester.create_view("/")], routes=[route], prefix="/nest"
     )
 
-    map = AppRouteTester.parse_multiple_routes([route, route2])
-
-    assert "/one" in map
-    assert "/nest/" in map
-    assert "/nest/one" in map
+    assert AppRouteTester(route).has_endpoint("/one")
+    assert AppRouteTester(route2).has_endpoint("/nest/")
+    assert AppRouteTester(route2).has_endpoint("/nest/one")

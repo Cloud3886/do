@@ -31,13 +31,14 @@ class TestFlaskRouter(ClassTester):
 
     def test_router_with_database(self):
         router = FlaskRouter("test_router", DB_URI="sqlite:///")
+
         router.register_view(create_view("/"))
+
         assert isinstance(router.db_manager, DatabaseManager)
         assert isinstance(router.app.session.registry, sql_tools.ScopedRegistry)
 
-        router.app.test_client().get("/")
-
-        router.app.test_client().get("/")
+        router.tester().get("/")
+        router.tester().get("/")
 
     # def test_run(self, router: FlaskRouter):
     #     router.register_view(create_view("/"))
@@ -63,12 +64,12 @@ class TestFlaskRouter(ClassTester):
 
     def test_view_at_index(self, router: FlaskRouter):
         router.register_view(create_view("/"))
-        res = router.app.test_client().get("/")
+        res = router.tester().get("/")
         assert res.status_code == 200
 
     def test_view_at_test(self, router: FlaskRouter):
         router.register_view(create_view("/test"))
-        res = router.app.test_client().get("/test")
+        res = router.tester().get("/test")
         assert res.status_code == 200
 
     def test_view_data_retention(self, router: FlaskRouter):
@@ -86,10 +87,10 @@ class TestFlaskRouter(ClassTester):
 
         router.register_view(SomeView())
 
-        res = router.app.test_client().get("/")
+        res = router.tester().get("/")
         assert int(res.data) == 1
 
-        res = router.app.test_client().get("/")
+        res = router.tester().get("/")
         assert int(res.data) == 2
 
     def test_view_data_reload(self, router: FlaskRouter):
@@ -106,10 +107,10 @@ class TestFlaskRouter(ClassTester):
 
         router.register_view(SomeView())
 
-        res = router.app.test_client().get("/")
+        res = router.tester().get("/")
         assert int(res.data) == 1
 
-        res = router.app.test_client().get("/")
+        res = router.tester().get("/")
         assert int(res.data) == 1
 
     def test_view_data_reload_with_view_arg(self, router: FlaskRouter):
@@ -129,31 +130,31 @@ class TestFlaskRouter(ClassTester):
 
         router.register_view(SomeView(8))
 
-        res = router.app.test_client().get("/")
+        res = router.tester().get("/")
         assert int(res.data) == 9
 
-        res = router.app.test_client().get("/")
+        res = router.tester().get("/")
         assert int(res.data) == 9
 
     def test_view_multiple(self, router: FlaskRouter):
         router.register_view(create_view("/"))
         router.register_view(create_view("/test"))
 
-        res = router.app.test_client().get("/")
+        res = router.tester().get("/")
         assert res.status_code == 200
 
-        res = router.app.test_client().get("/test")
+        res = router.tester().get("/test")
         assert res.status_code == 200
 
     def test_view_response(self, router: FlaskRouter):
         router.register_view(create_view("/"))
         router.register_view(create_view("/test", data="more testing"))
 
-        res = router.app.test_client().get("/")
+        res = router.tester().get("/")
         assert res.status_code == 200
         assert res.data == b"testing"
 
-        res = router.app.test_client().get("/test")
+        res = router.tester().get("/test")
         assert res.status_code == 200
         assert res.data == b"more testing"
 
@@ -167,7 +168,7 @@ class TestFlaskRouter(ClassTester):
 
         router.register_view(SomeView())
 
-        res = router.app.test_client().get("/testing")
+        res = router.tester().get("/testing")
         assert res.status_code == 200
         assert res.data == b"testing"
 
@@ -181,11 +182,11 @@ class TestFlaskRouter(ClassTester):
 
         router.register_view(SomeView())
 
-        res = router.app.test_client().post("/")
+        res = router.tester().post("/")
         assert res.status_code == 200
         assert res.data == b"Success"
 
-        res = router.app.test_client().get("/")
+        res = router.tester().get("/")
         assert res.status_code == 405
 
     def test_view_with_multiple_methods(self, router: FlaskRouter):
@@ -201,11 +202,11 @@ class TestFlaskRouter(ClassTester):
 
         router.register_view(SomeView())
 
-        res = router.app.test_client().post("/")
+        res = router.tester().post("/")
         assert res.status_code == 200
         assert res.data == b"Success"
 
-        res = router.app.test_client().get("/")
+        res = router.tester().get("/")
         assert res.status_code == 200
         assert res.data == b"No Data"
 
@@ -232,14 +233,14 @@ class TestFlaskRouter(ClassTester):
         router.register_route(route4)
         router.register_route(route5)
 
-        assert router.app.test_client().get("/").data == b"testing"
-        assert router.app.test_client().get("/test").data == b"test"
-        assert router.app.test_client().get("/test1").data == b"testing"
-        assert router.app.test_client().get("/test2").data == b"testing"
-        assert router.app.test_client().get("/nest/").data == b"testing"
-        assert router.app.test_client().get("/nest/nest2/").data == b"more test"
-        assert router.app.test_client().get("/nested/").data == b"testing"
-        assert router.app.test_client().get("/nested/test").data == b"testing"
+        assert router.tester().get("/").data == b"testing"
+        assert router.tester().get("/test").data == b"test"
+        assert router.tester().get("/test1").data == b"testing"
+        assert router.tester().get("/test2").data == b"testing"
+        assert router.tester().get("/nest/").data == b"testing"
+        assert router.tester().get("/nest/nest2/").data == b"more test"
+        assert router.tester().get("/nested/").data == b"testing"
+        assert router.tester().get("/nested/test").data == b"testing"
 
     def test_route_with_multi_methods(self, router: FlaskRouter):
         class SomeView(UiView):
@@ -254,11 +255,11 @@ class TestFlaskRouter(ClassTester):
 
         router.register_route(create_route([SomeView()]))
 
-        res = router.app.test_client().post("/")
+        res = router.tester().post("/")
         assert res.status_code == 200
         assert res.data == b"Success"
 
-        res = router.app.test_client().get("/")
+        res = router.tester().get("/")
         assert res.status_code == 200
         assert res.data == b"No Data"
 
@@ -269,9 +270,9 @@ class TestFlaskRouter(ClassTester):
 
         router = FlaskRouter(__name__, views=[view1, view2], routes=[route1])
 
-        assert router.app.test_client().get("/").status_code == 200
-        assert router.app.test_client().get("/test").status_code == 200
-        assert router.app.test_client().get("/one/").status_code == 200
+        assert router.tester().get("/").status_code == 200
+        assert router.tester().get("/test").status_code == 200
+        assert router.tester().get("/one/").status_code == 200
 
     def test_view_helpers(self, router: FlaskRouter):
         class SomeView(UiView):
@@ -286,5 +287,5 @@ class TestFlaskRouter(ClassTester):
 
         router.register_view(SomeView())
 
-        assert router.app.test_client().post("/").json == "Success"
-        assert router.app.test_client().get("/").json == "No Data"
+        assert router.tester().post("/").json == "Success"
+        assert router.tester().get("/").json == "No Data"
