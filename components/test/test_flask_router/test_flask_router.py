@@ -21,20 +21,20 @@ class TestFlaskRouter(ClassTester):
         router = FlaskRouter(__name__)
         return router
 
-    def test_router_interface(self, router):
+    def test_router(self, router):
         assert isinstance(router, Router)
 
-    def test_router(self):
+    def test_router_app(self):
         router = FlaskRouter("test_router")
         assert isinstance(router.app, Flask)
         assert router.app.import_name == "test_router"
 
     def test_router_with_database(self):
         router = FlaskRouter("test_router", DB_URI="sqlite:///")
-
         router.register_view(create_view("/"))
 
         assert isinstance(router.db_manager, DatabaseManager)
+        assert router.app.session
         assert isinstance(router.app.session.registry, sql_tools.ScopedRegistry)
 
         router.tester().get("/")
@@ -97,6 +97,7 @@ class TestFlaskRouter(ClassTester):
         class SomeView(UiView):
             name = "some"
             endpoint = "/"
+            reloads = True
 
             def __init__(self) -> None:
                 self.count = 0

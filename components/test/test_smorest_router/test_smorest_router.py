@@ -71,7 +71,7 @@ class TestSmorestRouter(FlaskRouterTester):
         router = SmorestRouter(__name__)
         return router
 
-    def test_router(self):
+    def test_router_app(self):
         router = SmorestRouter("test")
         assert isinstance(router.app, Flask)
         assert router.app.import_name == "test"
@@ -146,12 +146,12 @@ class TestSmorestRouter(FlaskRouterTester):
         assert api2 in router.apis
         assert api3 in router.apis
 
-        assert router.tester().get("/").status_code == 200
-        assert router.tester().get("/ui").status_code == 200
-
         assert router.tester().get("/v1/").status_code == 200
         assert router.tester().get("/v1/v1/").status_code == 200
         assert router.tester().get("/v1/ui").status_code == 200
+
+        assert router.tester().get("/").status_code == 200
+        assert router.tester().get("/ui").status_code == 200
 
         assert router.tester().get("/v2/").status_code == 200
         assert router.tester().get("/v2/ui").status_code == 200
@@ -159,11 +159,11 @@ class TestSmorestRouter(FlaskRouterTester):
     def test_api_direct_access(self, router: SmorestRouter):
         api1 = router.add_api(SmorestConfigTester.create_smorest_config("v1"), [])
         api2 = router.add_api(SmorestConfigTester.create_smorest_config(), [])
-        api3 = router.add_api(SmorestConfigTester.create_smorest_config("v2"), [])
+        api3 = router.add_api(SmorestConfigTester.create_smorest_config("v2_long"), [])
 
         assert api2 == router.api
         assert api1 == router.api_v1
-        assert api3 == router.api_v2
+        assert api3 == router.api_v2_long
 
     def test_router_params(self):
         router = SmorestRouter(
@@ -199,6 +199,17 @@ class TestSmorestRouter(FlaskRouterTester):
         assert router.tester().get("/").status_code == 200
         assert router.tester().get("/nest/").status_code == 200
 
+    def test_generate_openapi_json(self, router: SmorestRouter):
+        api = router.add_api(
+            SmorestConfigTester.create_smorest_config(ui="/ui"),
+            [create_route([create_view("/")])],
+        )
+
+        openapi_json = router.generate_openapi_json(api)
+        print(prettify(openapi_json))
+
+        assert "get" in openapi_json["paths"]["/"]
+
     def test_view_decorators(self, router: SmorestRouter):
         class One(ma.Schema):
             id = ma.fields.Int(dump_only=True)
@@ -230,7 +241,7 @@ class TestSmorestRouter(FlaskRouterTester):
             SmorestConfigTester.create_smorest_config(), [create_route([SomeView()])]
         )
 
-        openapi_json: dict = api.spec.to_dict()
+        openapi_json = router.generate_openapi_json(api)
         print(prettify(openapi_json))
 
         # Test Arguments

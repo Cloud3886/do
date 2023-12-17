@@ -25,8 +25,8 @@ class AppRouteTester(InstanceTester):
             assert self.route.prefix.startswith("/")
 
     def has_route(self, prefix: str = None):
-        for route in self.route.routes:
-            if route.prefix == prefix:
+        for nested_routes in self.route.routes:
+            if nested_routes.prefix == prefix:
                 return True
 
         return False
@@ -54,14 +54,6 @@ class AppRouteTester(InstanceTester):
 
         return route_map
 
-    # @classmethod
-    # def parse_multiple_routes(cls, routes: list[AppRoute]) -> list[str]:
-    #     route_map: list[str] = []
-    #     for route in routes:
-    #         route_map.extend(cls.parse_route(route))
-
-    #     return list(filter(None, route_map))
-
     @staticmethod
     def create_route(
         views: list[T],
@@ -88,29 +80,21 @@ class AppRouteTester(InstanceTester):
 # Test Cases
 # ------------------------------------------------------------------------------
 def test_app_route():
-    route = AppRouteTester.create_route([ApiViewTester.create_view("/")])
+    route = AppRouteTester.create_route([ApiViewTester.create_view("/one")])
     route2 = AppRouteTester.create_route(
         [ApiViewTester.create_view("/")], routes=[route], prefix="/nest"
     )
 
     test1 = AppRouteTester(route)
     test1.test()
-    assert test1.has_view("/")
+    assert test1.has_view("/one")
+    assert test1.has_endpoint("/one")
     assert not test1.has_view("/no")
     assert not test1.has_route()
 
     test2 = AppRouteTester(route2)
     test2.test()
-    assert test2.has_route()
     assert test2.has_view("/")
-
-
-def test_parse_routes():
-    route = AppRouteTester.create_route([ApiViewTester.create_view("/one")])
-    route2 = AppRouteTester.create_route(
-        [ApiViewTester.create_view("/")], routes=[route], prefix="/nest"
-    )
-
-    assert AppRouteTester(route).has_endpoint("/one")
-    assert AppRouteTester(route2).has_endpoint("/nest/")
-    assert AppRouteTester(route2).has_endpoint("/nest/one")
+    assert test2.has_route()
+    assert test2.has_endpoint("/nest/")
+    assert test2.has_endpoint("/nest/one")

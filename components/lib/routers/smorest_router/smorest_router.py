@@ -1,3 +1,5 @@
+from typing import Any
+
 from flask_smorest import Api, Blueprint
 
 from components.lib.basic_routes.app_route import AppRoute
@@ -49,6 +51,9 @@ class SmorestRouter(FlaskRouter):
             self.register_route_with_api(api, route)
 
         return api
+
+    def generate_openapi_json(self, api: Api) -> dict:
+        return api.spec.to_dict()
 
     def _initialize_fields(self):
         super()._initialize_fields()
