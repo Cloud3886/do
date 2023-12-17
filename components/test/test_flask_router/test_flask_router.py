@@ -6,6 +6,7 @@ from flask.testing import FlaskClient
 from components.lib.basic_routes.ui_view import UiView
 from components.lib.database_manager import DatabaseManager
 from components.lib.flask_router.flask_router import FlaskRouter
+from components.lib.router import Router
 from components.test._components._testers import ClassTester
 from components.test.test_basic_routes.test_app_route import AppRouteTester
 from components.test.test_basic_routes.test_ui_view import UiViewTester
@@ -19,6 +20,9 @@ class TestFlaskRouter(ClassTester):
     def router(self) -> FlaskRouter:
         router = FlaskRouter(__name__)
         return router
+
+    def test_router_interface(self, router):
+        assert isinstance(router, Router)
 
     def test_router(self):
         router = FlaskRouter("test_router")

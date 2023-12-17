@@ -10,13 +10,14 @@ from flask.globals import app_ctx
 from components.lib.basic_routes.app_route import AppRoute
 from components.lib.basic_routes.ui_view import UiView
 from components.lib.database_manager import DatabaseManager
+from components.lib.router import Router
 
 from .flask_view_adapter import FlaskViewAdapter
 
 Teardown = Callable[[Flask], None]
 
 
-class FlaskRouter:
+class FlaskRouter(Router):
     def __init__(
         self,
         name: str,
