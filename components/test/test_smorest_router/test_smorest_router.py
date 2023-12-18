@@ -5,7 +5,7 @@ from flask import Flask
 from flask_smorest import Api
 
 from components.lib.database_manager import DatabaseManager
-from components.lib.routers.smorest_router import (
+from components.lib.smorest_router import (
     OpenapiView,
     SmorestConfig,
     SmorestRouter,

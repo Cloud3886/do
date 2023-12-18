@@ -5,9 +5,9 @@ from flask.testing import FlaskClient
 
 from components.lib.basic_routes.ui_view import UiView
 from components.lib.database_manager import DatabaseManager
-from components.lib.routers.flask_router.flask_router import FlaskRouter
-from components.lib.routers.router import Router
+from components.lib.flask_router.flask_router import FlaskRouter
 from components.test._components._testers import ClassTester
+from components.test.test_basic_routes.test_api_view import ApiViewTester
 from components.test.test_basic_routes.test_app_route import AppRouteTester
 from components.test.test_basic_routes.test_ui_view import UiViewTester
 
@@ -20,9 +20,6 @@ class TestFlaskRouter(ClassTester):
     def router(self) -> FlaskRouter:
         router = FlaskRouter(__name__)
         return router
-
-    def test_router(self, router):
-        assert isinstance(router, Router)
 
     def test_router_app(self):
         router = FlaskRouter("test_router")
@@ -64,6 +61,11 @@ class TestFlaskRouter(ClassTester):
 
     def test_view_at_index(self, router: FlaskRouter):
         router.register_view(create_view("/"))
+        res = router.tester().get("/")
+        assert res.status_code == 200
+
+    def test_api_view_at_index(self, router: FlaskRouter):
+        router.register_view(ApiViewTester.create_view("/"))
         res = router.tester().get("/")
         assert res.status_code == 200
 

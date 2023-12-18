@@ -4,7 +4,7 @@ from flask_smorest import Api, Blueprint
 
 from components.lib.basic_routes.app_route import AppRoute
 from components.lib.basic_routes.ui_view import UiView
-from components.lib.routers.flask_router import FlaskRouter
+from components.lib.flask_router import FlaskRouter
 
 from .openapi_view import OpenapiView
 from .smorest_config import SmorestConfig
