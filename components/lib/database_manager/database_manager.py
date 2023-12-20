@@ -9,12 +9,12 @@ class DatabaseManager:
         self._set_base_model()
 
         self.engine = self._engine(DB_URI)
-        self.SessionFactory = None
+        self.session = None
 
-    def configure_session_factory(self, scope_func=None):
+    def configure_session(self, scope_func=None):
         SessionScoped = self._scoped_session_factory(self.engine, scope_func)
-        self.SessionFactory = SessionScoped
-        self.Base.query = self.SessionFactory.query_property()
+        self.session = SessionScoped
+        self.Base.query = self.session.query_property()
 
     def _set_base_model(self):
         self.Base = declarative_base()

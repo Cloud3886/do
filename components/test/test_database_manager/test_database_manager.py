@@ -21,8 +21,8 @@ class TestDatabaseManager(ClassTester):
         assert db.engine
 
     def test_session_factory(self, db: DatabaseManager):
-        assert not db.SessionFactory
+        assert not db.session
 
-        db.configure_session_factory()
+        db.configure_session()
 
-        assert db.SessionFactory
+        assert db.session

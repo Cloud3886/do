@@ -116,10 +116,10 @@ class FlaskRouter:
         def get_flask_app_ctx() -> int:
             return id(app_ctx._get_current_object())
 
-        db_manager.configure_session_factory(get_flask_app_ctx)
+        db_manager.configure_session(get_flask_app_ctx)
 
     def _connect_db_session_with_app(self):
-        self.app.session = self.db_manager.SessionFactory
+        self.app.session = self.db_manager.session
 
         def remove_session(app: Flask):
             app.session.remove()
