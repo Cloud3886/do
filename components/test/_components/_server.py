@@ -1,6 +1,6 @@
-import multiprocessing, traceback
+import multiprocessing
 import sys
-
+import traceback
 
 multiprocessing.set_start_method("fork")
 
