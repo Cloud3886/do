@@ -50,6 +50,13 @@ class TestFlaskRouter(ClassTester):
         assert isinstance(router.db_manager, DatabaseManager)
         assert router.app.config.get("SECRET_KEY") == "secretly secret"
 
+    def test_router_empty_configuration(self):
+        class Config:
+            SQLALCHEMY_DATABASE_URI = None
+
+        router = FlaskRouter("test_router", config=Config())
+        assert not router.db_manager
+
     # def test_run(self, router: FlaskRouter):
     #     router.register_view(create_view("/"))
 

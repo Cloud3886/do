@@ -72,7 +72,7 @@ class FlaskRouter:
         if config:
             self.app.config.from_object(config)
             if hasattr(config, "SQLALCHEMY_DATABASE_URI"):
-                self._configure_db(getattr(config, "SQLALCHEMY_DATABASE_URI"))
+                self._initialize_db(getattr(config, "SQLALCHEMY_DATABASE_URI"))
 
     def _initialize_db(self, DB_URI: str | None):
         if DB_URI:
