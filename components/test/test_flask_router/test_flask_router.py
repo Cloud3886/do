@@ -27,7 +27,10 @@ class TestFlaskRouter(ClassTester):
         assert router.app.import_name == "test_router"
 
     def test_router_with_database(self):
-        router = FlaskRouter("test_router", DB_URI="sqlite:///")
+        class Config:
+            SQLALCHEMY_DATABASE_URI = "sqlite:///"
+
+        router = FlaskRouter("test_router", config=Config)
         router.register_view(create_view("/"))
 
         assert isinstance(router.db_manager, DatabaseManager)
@@ -36,6 +39,16 @@ class TestFlaskRouter(ClassTester):
 
         router.tester().get("/")
         router.tester().get("/")
+
+    def test_router_configuration(self):
+        class Config:
+            SQLALCHEMY_DATABASE_URI = "sqlite:///"
+            SECRET_KEY = "secretly secret"
+
+        router = FlaskRouter("test_router", config=Config())
+
+        assert isinstance(router.db_manager, DatabaseManager)
+        assert router.app.config.get("SECRET_KEY") == "secretly secret"
 
     # def test_run(self, router: FlaskRouter):
     #     router.register_view(create_view("/"))

@@ -19,11 +19,11 @@ class SmorestRouter(FlaskRouter):
         views: list[UiView] | None = None,
         routes: list[AppRoute[UiView]] | None = None,
         openapi_spec: dict[SmorestConfig, list[AppRoute[OpenapiView]]] | None = None,
-        DB_URI: str | None = None,
+        config: object | None = None,
     ) -> None:
         self._initialize_app(name)
         self._initialize_fields()
-        self._initialize_db(DB_URI)
+        self._initialize_configuration(config)
         self._initialize_views(views)
         self._initialize_routes(routes)
         self._initialize_openapi_specs(openapi_spec)
