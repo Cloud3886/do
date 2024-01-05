@@ -4,6 +4,7 @@ from flask_smorest import Api, Blueprint
 
 from components.lib.basic_routes.app_route import AppRoute
 from components.lib.basic_routes.ui_view import UiView
+from components.lib.database_manager.database_manager import DatabaseManager
 from components.lib.flask_router import FlaskRouter
 
 from .openapi_view import OpenapiView
@@ -20,6 +21,7 @@ class SmorestRouter(FlaskRouter):
         routes: list[AppRoute[UiView]] | None = None,
         openapi_spec: dict[SmorestConfig, list[AppRoute[OpenapiView]]] | None = None,
         config: object | None = None,
+        db: DatabaseManager | None = None,
     ) -> None:
         self._initialize_app(name)
         self._initialize_fields()
@@ -27,6 +29,7 @@ class SmorestRouter(FlaskRouter):
         self._initialize_views(views)
         self._initialize_routes(routes)
         self._initialize_openapi_specs(openapi_spec)
+        self._initialize_db(db)
         self._initialize_teardowns()
 
     def register_view(self, view: UiView, main: Blueprint = None):

@@ -27,13 +27,19 @@ class TestFlaskRouter(ClassTester):
         assert router.app.import_name == "test_router"
 
     def test_router_with_database(self):
-        class Config:
-            SQLALCHEMY_DATABASE_URI = "sqlite:///"
+        db = DatabaseManager("sqlite:///")
+        router = FlaskRouter("test_router", views=[create_view("/")], db=db)
+        assert isinstance(router.app.session.registry, sql_tools.ScopedRegistry)
 
-        router = FlaskRouter("test_router", config=Config)
+        router.tester().get("/")
+        router.tester().get("/")
+
+    def test_database_registration(self, router: FlaskRouter):
+        db = DatabaseManager("sqlite:///")
+
         router.register_view(create_view("/"))
+        router.register_db(db)
 
-        assert isinstance(router.db_manager, DatabaseManager)
         assert router.app.session
         assert isinstance(router.app.session.registry, sql_tools.ScopedRegistry)
 
@@ -46,16 +52,7 @@ class TestFlaskRouter(ClassTester):
             SECRET_KEY = "secretly secret"
 
         router = FlaskRouter("test_router", config=Config())
-
-        assert isinstance(router.db_manager, DatabaseManager)
         assert router.app.config.get("SECRET_KEY") == "secretly secret"
-
-    def test_router_empty_configuration(self):
-        class Config:
-            SQLALCHEMY_DATABASE_URI = None
-
-        router = FlaskRouter("test_router", config=Config())
-        assert not router.db_manager
 
     # def test_run(self, router: FlaskRouter):
     #     router.register_view(create_view("/"))

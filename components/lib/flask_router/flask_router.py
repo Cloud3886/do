@@ -23,12 +23,14 @@ class FlaskRouter:
         views: list[UiView] | None = None,
         routes: list[AppRoute[UiView]] | None = None,
         config: object | None = None,
+        db: DatabaseManager | None = None,
     ) -> None:
         self._initialize_app(name)
         self._initialize_fields()
         self._initialize_configuration(config)
         self._initialize_views(views)
         self._initialize_routes(routes)
+        self._initialize_db(db)
         self._initialize_teardowns()
 
     @staticmethod
@@ -57,6 +59,10 @@ class FlaskRouter:
         bp = self._configure_route(route)
         (main or self.app).register_blueprint(bp)
 
+    def register_db(self, db: DatabaseManager):
+        self._configure_db_session_with_flask(db)
+        self._connect_db_session_with_app(db)
+
     def register_teardown_appcontext(self, key: str, teardown: Teardown):
         self._teardown_appcontext.record_teardown(key, teardown)
 
@@ -64,19 +70,12 @@ class FlaskRouter:
         self.app = self.create_app(name)
 
     def _initialize_fields(self):
-        self.db_manager = None
         self.app.test_client_class = FlaskRouterTester
         self._teardown_appcontext = TeardownRecorder()
 
     def _initialize_configuration(self, config: object | None):
         if config:
             self.app.config.from_object(config)
-            if hasattr(config, "SQLALCHEMY_DATABASE_URI"):
-                self._initialize_db(getattr(config, "SQLALCHEMY_DATABASE_URI"))
-
-    def _initialize_db(self, DB_URI: str | None):
-        if DB_URI:
-            self._configure_db(DB_URI)
 
     def _initialize_views(self, views: list[UiView] | None):
         if views:
@@ -88,17 +87,15 @@ class FlaskRouter:
             for route in routes:
                 self.register_route(route)
 
+    def _initialize_db(self, db: DatabaseManager | None):
+        if db:
+            self.register_db(db)
+
     def _initialize_teardowns(self):
         self._teardown_appcontext.init(
             registrar=self.app.teardown_appcontext,
             arg=self.app,
         )
-
-    def _configure_db(self, DB_URI: str):
-        if not self.db_manager:
-            self.db_manager = DatabaseManager(DB_URI)
-            self._configure_db_session_with_flask(self.db_manager)
-            self._connect_db_session_with_app()
 
     def _configure_route(self, route: AppRoute[UiView]) -> Blueprint:
         bp = self._create_blueprint(route)
@@ -118,8 +115,8 @@ class FlaskRouter:
 
         db_manager.configure_session(get_flask_app_ctx)
 
-    def _connect_db_session_with_app(self):
-        self.app.session = self.db_manager.session
+    def _connect_db_session_with_app(self, db_manager: DatabaseManager):
+        self.app.session = db_manager.session
 
         def remove_session(app: Flask):
             app.session.remove()
