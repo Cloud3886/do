@@ -22,7 +22,7 @@ class DatabaseManager:
 
     @classmethod
     def _engine(cls, DB_URI: str) -> Engine:
-        return create_engine(DB_URI, connect_args={"check_same_thread": False})
+        return create_engine(DB_URI)
 
     @classmethod
     def _session_factory(cls, engine: Engine):
