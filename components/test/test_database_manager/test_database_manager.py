@@ -10,6 +10,12 @@ class TestDatabaseManager(ClassTester):
         db = DatabaseManager("sqlite:///")
         return db
 
+    def test_debug_log(self):
+        import logging
+
+        DatabaseManager("sqlite:///", debug=True)
+        assert logging.getLogger("sqlalchemy.engine").level == logging.INFO
+
     def test_model_base(self, db: DatabaseManager):
         assert db.Base
 
