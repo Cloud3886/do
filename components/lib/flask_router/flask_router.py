@@ -59,9 +59,14 @@ class FlaskRouter:
         bp = self._configure_route(route)
         (main or self.app).register_blueprint(bp)
 
-    def register_db(self, db: DatabaseManager):
-        self._configure_db_session_with_flask(db)
-        self._connect_db_session_with_app(db)
+    def register_db(self, db: DatabaseManager) -> bool:
+        if not hasattr(self, "db"):
+            self.db = db
+            self._configure_db_session_with_flask(db)
+            self._connect_db_session_with_app(db)
+            return True
+        else:
+            return False
 
     def register_teardown_appcontext(self, key: str, teardown: Teardown):
         self._teardown_appcontext.record_teardown(key, teardown)

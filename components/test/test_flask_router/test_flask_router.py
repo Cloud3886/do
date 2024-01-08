@@ -29,6 +29,7 @@ class TestFlaskRouter(ClassTester):
     def test_router_with_database(self):
         db = DatabaseManager("sqlite:///")
         router = FlaskRouter("test_router", views=[create_view("/")], db=db)
+        assert router.db
         assert isinstance(router.app.session.registry, sql_tools.ScopedRegistry)
 
         router.tester().get("/")
@@ -40,6 +41,7 @@ class TestFlaskRouter(ClassTester):
         router.register_view(create_view("/"))
         router.register_db(db)
 
+        assert router.db
         assert router.app.session
         assert isinstance(router.app.session.registry, sql_tools.ScopedRegistry)
 
