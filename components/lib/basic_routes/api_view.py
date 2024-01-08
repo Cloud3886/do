@@ -28,6 +28,10 @@ class ApiView:
     def _build(self, router: Router, *args, **kwargs):
         self.router = router
         self._ready = True
+        self.init_state()
+
+    def init_state(self):
+        pass
 
     def _view_methods(self) -> dict[str, Any]:
         methods = {}

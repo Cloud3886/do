@@ -130,6 +130,28 @@ class TestFlaskRouter(ClassTester):
         res = router.tester().get("/")
         assert res.data == b"Key of Heaven"
 
+    def test_view_init_state(self, router: FlaskRouter):
+        router.secret = "Key of Heaven"
+        hidden_secret = "hidden"
+
+        class SomeView(UiView):
+            name = "some"
+            endpoint = "/"
+            reloads = True
+
+            def init_state(self):
+                nonlocal hidden_secret
+                if self.router.secret == "Key of Heaven":
+                    hidden_secret = "Heaven is not locked"
+
+            def get(self):
+                return hidden_secret
+
+        router.register_view(SomeView())
+
+        res = router.tester().get("/")
+        assert res.data == b"Heaven is not locked"
+
     def test_view_data_reload(self, router: FlaskRouter):
         class SomeView(UiView):
             name = "some"
