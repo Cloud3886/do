@@ -1,5 +1,7 @@
 from typing import Any, Callable, Concatenate
 
+from components.lib.router.router import Router
+
 from .api_view import ApiView
 
 
@@ -12,6 +14,7 @@ class UiView(ApiView):
 
     def _build(
         self,
+        router: Router,
         serialize: Callable[[Any], Any] = serialize,
         render_template: Callable[Concatenate[str, ...], str] = render_template,
         *args,
@@ -19,4 +22,4 @@ class UiView(ApiView):
     ):
         self.serialize = serialize
         self.render_template = render_template
-        self._ready = True
+        super()._build(router, *args, **kwargs)

@@ -1,5 +1,7 @@
 from typing import Any
 
+from components.lib.router.router import Router
+
 http_methods = frozenset(
     ["get", "post", "head", "options", "delete", "put", "trace", "patch"]
 )
@@ -23,7 +25,8 @@ class ApiView:
         self._class_args = args
         self._class_kwargs = kwargs
 
-    def _build(self, *args, **kwargs):
+    def _build(self, router: Router, *args, **kwargs):
+        self.router = router
         self._ready = True
 
     def _view_methods(self) -> dict[str, Any]:

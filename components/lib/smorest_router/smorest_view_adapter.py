@@ -2,12 +2,18 @@ from flask_smorest import Blueprint
 
 from components.lib.basic_routes.ui_view import UiView
 from components.lib.flask_router import FlaskViewAdapter
+from components.lib.router.router import Router
 
 
 class SmorestViewAdapter(FlaskViewAdapter):
-    def __init__(self, view: UiView, blueprint: Blueprint = None) -> None:
+    def __init__(
+        self,
+        router: Router,
+        view: UiView,
+        blueprint: Blueprint = None,
+    ) -> None:
+        super().__init__(router, view)
         self.blueprint = blueprint
-        super().__init__(view)
         self._init_docs()
 
     def _init_docs(self):

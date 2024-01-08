@@ -114,6 +114,22 @@ class TestFlaskRouter(ClassTester):
         res = router.tester().get("/")
         assert int(res.data) == 2
 
+    def test_view_router_access(self, router: FlaskRouter):
+        router.secret = "Key of Heaven"
+
+        class SomeView(UiView):
+            name = "some"
+            endpoint = "/"
+            reloads = True
+
+            def get(self):
+                return self.router.secret
+
+        router.register_view(SomeView())
+
+        res = router.tester().get("/")
+        assert res.data == b"Key of Heaven"
+
     def test_view_data_reload(self, router: FlaskRouter):
         class SomeView(UiView):
             name = "some"

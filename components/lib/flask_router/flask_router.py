@@ -9,13 +9,14 @@ from flask.globals import app_ctx
 from components.lib.basic_routes.app_route import AppRoute
 from components.lib.basic_routes.ui_view import UiView
 from components.lib.database_manager import DatabaseManager
+from components.lib.router.router import Router
+from components.lib.router.teardown_recorder import Teardown, TeardownRecorder
 
 from .flask_test_client import FlaskRouterTester
 from .flask_view_adapter import FlaskViewAdapter
-from .teardown_recorder import Teardown, TeardownRecorder
 
 
-class FlaskRouter:
+class FlaskRouter(Router):
     def __init__(
         self,
         name: str,
@@ -129,7 +130,7 @@ class FlaskRouter:
         self.register_teardown_appcontext("remove_session", remove_session)
 
     def _create_adapter(self, view: UiView) -> FlaskViewAdapter:
-        return FlaskViewAdapter(view)
+        return FlaskViewAdapter(self, view)
 
     def _create_blueprint(self, route: AppRoute) -> Blueprint:
         return Blueprint(

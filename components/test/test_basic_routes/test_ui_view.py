@@ -1,4 +1,5 @@
 from components.lib.basic_routes.ui_view import UiView
+from components.lib.flask_router.flask_router import FlaskRouter
 from components.test.test_basic_routes.test_api_view import ApiViewTester
 from components.utils.extensions import hash_gen
 
@@ -17,19 +18,23 @@ class UiViewTester(ApiViewTester):
         self.view.render_template("template")
 
     def test_view_building(self):
+        router = FlaskRouter("test")
+
         def serialize(data):
             pass
 
         def render(template: str, **kwargs):
             pass
 
-        self.view._build(serialize, render)
+        self.view._build(router, serialize, render)
         assert self.view.render_template == render
         assert self.view.serialize == serialize
+        assert self.view.router == router
         assert self.view._ready
 
         del self.view.render_template
         del self.view.serialize
+        del self.view.router
         del self.view._ready
 
     @staticmethod

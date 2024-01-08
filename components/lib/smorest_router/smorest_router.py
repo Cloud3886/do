@@ -124,7 +124,7 @@ class SmorestRouter(FlaskRouter):
         view: UiView,
         blueprint: Blueprint = None,
     ) -> SmorestViewAdapter:
-        return SmorestViewAdapter(view, blueprint)
+        return SmorestViewAdapter(self, view, blueprint)
 
     def _create_blueprint(self, route: AppRoute) -> Blueprint:
         bp = Blueprint(

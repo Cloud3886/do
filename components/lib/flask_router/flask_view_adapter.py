@@ -9,11 +9,13 @@ from flask import (
 from flask.views import MethodView
 
 from components.lib.basic_routes.ui_view import UiView
+from components.lib.router.router import Router
 
 
 class FlaskViewAdapter:
-    def __init__(self, view: UiView) -> None:
+    def __init__(self, router: Router, view: UiView) -> None:
         self.view = view
+        self.router = router
 
     def build_view_class(self) -> type[MethodView]:
         view_class = self._create_adapted_view_class()
@@ -87,6 +89,9 @@ class FlaskViewAdapter:
 
         return AdaptedView
 
-    @staticmethod
-    def _build_internal_view(view: UiView):
-        view._build(serialize=jsonify, render_template=render_template)
+    def _build_internal_view(self, view: UiView):
+        view._build(
+            router=self.router,
+            serialize=jsonify,
+            render_template=render_template,
+        )
