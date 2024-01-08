@@ -119,6 +119,7 @@ class TestFlaskRouter(ClassTester):
             reloads = True
 
             def __init__(self) -> None:
+                super().__init__()
                 self.count = 0
 
             def get(self):
@@ -139,6 +140,7 @@ class TestFlaskRouter(ClassTester):
             endpoint = "/"
 
             def __init__(self, count: int) -> None:
+                super().__init__()
                 self.count = count
                 self.store_args(count)
 

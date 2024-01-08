@@ -9,8 +9,10 @@ class ApiView:
     name: str = None
     endpoint: str = None
     reloads: bool = True
-    _class_args: list = []
-    _class_kwargs: dict = {}
+
+    def __init__(self) -> None:
+        self._class_args: list = []
+        self._class_kwargs: dict = {}
 
     def store_args(self, *args, **kwargs) -> None:
         if self._class_args or self._class_kwargs:

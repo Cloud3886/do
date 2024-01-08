@@ -70,8 +70,10 @@ class AppRouteTester(InstanceTester):
             name = route_name or hash_gen()
             prefix = path
 
-            views = urls
-            routes = nested_routes
+            def configure(self):
+                super().configure()
+                self.views = urls
+                self.routes = nested_routes
 
         return TRoute()
 
