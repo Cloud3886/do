@@ -36,6 +36,7 @@ class TestSmorestRouter(FlaskRouterTester):
     def test_router_with_database(self):
         db = DatabaseManager("sqlite:///")
         router = SmorestRouter("test_router", views=[create_view("/")], db=db)
+        assert router.db
         assert isinstance(router.app.session.registry, sql_tools.ScopedRegistry)
 
         router.tester().get("/")
