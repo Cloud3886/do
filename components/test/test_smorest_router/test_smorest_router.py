@@ -42,6 +42,26 @@ class TestSmorestRouter(FlaskRouterTester):
         router.tester().get("/")
         router.tester().get("/")
 
+    def test_view_init_state(self):
+        db = DatabaseManager("sqlite:///")
+        db.hidden_secret = "In Memory DB"
+
+        class SomeView(OpenapiView):
+            name = "some"
+            endpoint = "/"
+            reloads = True
+
+            def init_state(self):
+                self.router.db.hidden_secret = "Memory DB"
+
+            def get(self):
+                return self.router.db.hidden_secret
+
+        router = SmorestRouter("testing", views=[SomeView()], db=db)
+
+        res = router.tester().get("/")
+        assert res.data == b"Memory DB"
+
     def test_router_initialization(self):
         view1 = create_view("/")
         view2 = create_view("/test")

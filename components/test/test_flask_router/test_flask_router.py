@@ -130,9 +130,9 @@ class TestFlaskRouter(ClassTester):
         res = router.tester().get("/")
         assert res.data == b"Key of Heaven"
 
-    def test_view_init_state(self, router: FlaskRouter):
-        router.secret = "Key of Heaven"
-        hidden_secret = "hidden"
+    def test_view_init_state(self):
+        db = DatabaseManager("sqlite:///")
+        db.hidden_secret = "In Memory DB"
 
         class SomeView(UiView):
             name = "some"
@@ -140,17 +140,15 @@ class TestFlaskRouter(ClassTester):
             reloads = True
 
             def init_state(self):
-                nonlocal hidden_secret
-                if self.router.secret == "Key of Heaven":
-                    hidden_secret = "Heaven is not locked"
+                self.router.db.hidden_secret = "Memory DB"
 
             def get(self):
-                return hidden_secret
+                return self.router.db.hidden_secret
 
-        router.register_view(SomeView())
+        router = FlaskRouter("testing", views=[SomeView()], db=db)
 
         res = router.tester().get("/")
-        assert res.data == b"Heaven is not locked"
+        assert res.data == b"Memory DB"
 
     def test_view_data_reload(self, router: FlaskRouter):
         class SomeView(UiView):

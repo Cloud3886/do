@@ -26,10 +26,10 @@ class SmorestRouter(FlaskRouter):
         self._initialize_app(name)
         self._initialize_fields()
         self._initialize_configuration(config)
+        self._initialize_db(db)
         self._initialize_views(views)
         self._initialize_routes(routes)
         self._initialize_openapi_specs(openapi_spec)
-        self._initialize_db(db)
         self._initialize_teardowns()
 
     def register_view(self, view: UiView, main: Blueprint = None):
