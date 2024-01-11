@@ -11,7 +11,11 @@ class OpenapiViewTester(UiViewTester):
         self.view = view
 
     @staticmethod
-    def create_view(endpoint: str, data="testing", name: str = None) -> OpenapiView:
+    def create_view(
+        endpoint: str,
+        data="testing",
+        name: str | None = None,
+    ) -> OpenapiView:
         path = endpoint
         view_name = name
 
@@ -43,4 +47,4 @@ def test_openapi_view():
 
 def test_openapi_add_viewdoc():
     view = OpenapiViewTester.create_view("/")
-    assert view.get() == view._add_viewdoc("test")(view.get)()
+    assert view.get() == view._add_viewdoc("test")(view.get)()  # type: ignore

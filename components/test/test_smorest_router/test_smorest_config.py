@@ -24,7 +24,7 @@ class SmorestConfigTester(InstanceTester):
 
     @staticmethod
     def create_smorest_config(
-        name: str = None,
+        name: str | None = None,
         ui: str | None = None,
     ) -> SmorestConfig:
         return SmorestConfig(

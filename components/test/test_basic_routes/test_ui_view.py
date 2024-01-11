@@ -21,24 +21,24 @@ class UiViewTester(ApiViewTester):
         router = FlaskRouter("test")
 
         def serialize(data):
-            pass
+            return "serialized"
 
         def render(template: str, **kwargs):
-            pass
+            return "rendered"
 
         self.view._build(router, serialize, render)
-        assert self.view.render_template == render
-        assert self.view.serialize == serialize
+        assert self.view.render_template("test") == "rendered"
+        assert self.view.serialize("test") == "serialized"
         assert self.view.router == router
         assert self.view._ready
 
-        del self.view.render_template
-        del self.view.serialize
+        del self.view._serialize
+        del self.view._render_template
         del self.view.router
         del self.view._ready
 
     @staticmethod
-    def create_view(endpoint: str, data="testing", name: str = None) -> UiView:
+    def create_view(endpoint: str, data="testing", name: str | None = None) -> UiView:
         path = endpoint
         view_name = name
 

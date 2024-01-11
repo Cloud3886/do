@@ -24,14 +24,14 @@ class AppRouteTester(InstanceTester):
         if self.route.prefix:
             assert self.route.prefix.startswith("/")
 
-    def has_route(self, prefix: str = None):
+    def has_route(self, prefix: str | None = None):
         for nested_routes in self.route.routes:
             if nested_routes.prefix == prefix:
                 return True
 
         return False
 
-    def has_view(self, prefix: str = None) -> bool:
+    def has_view(self, prefix: str | None = None) -> bool:
         for view in self.route.views:
             if view.endpoint == prefix:
                 return True
@@ -57,16 +57,16 @@ class AppRouteTester(InstanceTester):
     @staticmethod
     def create_route(
         views: list[T],
-        routes: list[AppRoute[T]] = [],
-        prefix: str = None,
-        name: str = None,
-    ) -> AppRoute:
+        routes: list[AppRoute] = [],
+        prefix: str | None = None,
+        name: str | None = None,
+    ) -> AppRoute[T]:
         route_name = name
         path = prefix
         urls = views
         nested_routes = routes
 
-        class TRoute(AppRoute[T]):
+        class TRoute(AppRoute[T]):  # type: ignore
             name = route_name or hash_gen()
             prefix = path
 

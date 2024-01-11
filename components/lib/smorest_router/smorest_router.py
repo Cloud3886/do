@@ -32,12 +32,15 @@ class SmorestRouter(FlaskRouter):
         self._initialize_openapi_specs(openapi_spec)
         self._initialize_teardowns()
 
-    def register_view(self, view: UiView, main: Blueprint = None):
+    def register_view(self, view: UiView, main: Blueprint | None = None):
         adapter = self._create_adapter(view, main)
-        view_func = (
-            adapter.build_view_class() if main else adapter.build_view_function()
-        )
-        (main or self.app).add_url_rule(view.endpoint, view.name, view_func=view_func)
+
+        if main:
+            view_func = adapter.build_view_class()
+            main.add_url_rule(view.endpoint, view.name, view_func=view_func)
+        else:
+            view_func = adapter.build_view_function()
+            self.app.add_url_rule(view.endpoint, view.name, view_func=view_func)
 
     def register_route_with_api(self, api: Api, route: AppRoute[OpenapiView]) -> None:
         config = self.apis[api]
@@ -56,7 +59,7 @@ class SmorestRouter(FlaskRouter):
         return api
 
     def generate_openapi_json(self, api: Api) -> dict:
-        return api.spec.to_dict()
+        return api.spec.to_dict()  # type: ignore
 
     def _initialize_fields(self):
         super()._initialize_fields()
@@ -122,7 +125,7 @@ class SmorestRouter(FlaskRouter):
     def _create_adapter(
         self,
         view: UiView,
-        blueprint: Blueprint = None,
+        blueprint: Blueprint | None = None,
     ) -> SmorestViewAdapter:
         return SmorestViewAdapter(self, view, blueprint)
 

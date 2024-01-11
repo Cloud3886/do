@@ -7,7 +7,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 
 
 class DatabaseManager:
-    def __init__(self, DB_URI: str, debug: bool = None) -> None:
+    def __init__(self, DB_URI: str, debug: bool = False) -> None:
         if debug:
             self._setup_log()
         self._set_base_model()
@@ -28,7 +28,7 @@ class DatabaseManager:
         logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
 
     @classmethod
-    def _engine(cls, DB_URI: str, echo: bool = None) -> Engine:
+    def _engine(cls, DB_URI: str, echo: bool = False) -> Engine:
         return create_engine(DB_URI, echo=echo)
 
     @classmethod

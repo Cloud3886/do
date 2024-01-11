@@ -10,7 +10,7 @@ class SmorestViewAdapter(FlaskViewAdapter):
         self,
         router: Router,
         view: UiView,
-        blueprint: Blueprint = None,
+        blueprint: Blueprint | None,
     ) -> None:
         super().__init__(router, view)
         self.blueprint = blueprint
@@ -22,7 +22,7 @@ class SmorestViewAdapter(FlaskViewAdapter):
             self._init_docs_for_call_method(call, call_method)
 
     def _init_docs_for_call_method(self, call: str, call_method):
-        call_viewdoc: dict = getattr(call_method, "_viewdoc", None)
+        call_viewdoc: dict = getattr(call_method, "_viewdoc", None)  # type: ignore
         blueprint = self.blueprint
 
         if call_viewdoc and blueprint:
@@ -39,7 +39,7 @@ class SmorestViewAdapter(FlaskViewAdapter):
 
     @staticmethod
     def _add_apidoc(decoration: str, viewdoc: dict, blueprint: Blueprint, call_method):
-        docs: list[dict] = viewdoc.get(decoration)
+        docs: list[dict] = viewdoc.get(decoration)  # type: ignore
         if docs:
             for doc in docs:
                 call_method = getattr(blueprint, decoration)(**doc)(call_method)

@@ -7,7 +7,6 @@ from components.lib.basic_routes.ui_view import UiView
 from components.lib.database_manager import DatabaseManager
 from components.lib.flask_router.flask_router import FlaskRouter
 from components.test._components._testers import ClassTester
-from components.test.test_basic_routes.test_api_view import ApiViewTester
 from components.test.test_basic_routes.test_app_route import AppRouteTester
 from components.test.test_basic_routes.test_ui_view import UiViewTester
 
@@ -30,7 +29,7 @@ class TestFlaskRouter(ClassTester):
         db = DatabaseManager("sqlite:///")
         router = FlaskRouter("test_router", views=[create_view("/")], db=db)
         assert router.db
-        assert isinstance(router.app.session.registry, sql_tools.ScopedRegistry)
+        assert isinstance(router.app.session.registry, sql_tools.ScopedRegistry)  # type: ignore
 
         router.tester().get("/")
         router.tester().get("/")
@@ -42,8 +41,8 @@ class TestFlaskRouter(ClassTester):
         router.register_db(db)
 
         assert router.db
-        assert router.app.session
-        assert isinstance(router.app.session.registry, sql_tools.ScopedRegistry)
+        assert router.app.session  # type: ignore
+        assert isinstance(router.app.session.registry, sql_tools.ScopedRegistry)  # type: ignore
 
         router.tester().get("/")
         router.tester().get("/")
@@ -84,7 +83,7 @@ class TestFlaskRouter(ClassTester):
         assert res.status_code == 200
 
     def test_api_view_at_index(self, router: FlaskRouter):
-        router.register_view(ApiViewTester.create_view("/"))
+        router.register_view(UiViewTester.create_view("/"))
         res = router.tester().get("/")
         assert res.status_code == 200
 
@@ -115,7 +114,7 @@ class TestFlaskRouter(ClassTester):
         assert int(res.data) == 2
 
     def test_view_router_access(self, router: FlaskRouter):
-        router.secret = "Key of Heaven"
+        router.secret = "Key of Heaven"  # type: ignore
 
         class SomeView(UiView):
             name = "some"
@@ -123,7 +122,7 @@ class TestFlaskRouter(ClassTester):
             reloads = True
 
             def get(self):
-                return self.router.secret
+                return self.router.secret  # type: ignore
 
         router.register_view(SomeView())
 
@@ -132,7 +131,7 @@ class TestFlaskRouter(ClassTester):
 
     def test_view_init_state(self):
         db = DatabaseManager("sqlite:///")
-        db.hidden_secret = "In Memory DB"
+        db.hidden_secret = "In Memory DB"  # type: ignore
 
         class SomeView(UiView):
             name = "some"
@@ -140,10 +139,10 @@ class TestFlaskRouter(ClassTester):
             reloads = True
 
             def init_state(self):
-                self.router.db.hidden_secret = "Memory DB"
+                self.router.db.hidden_secret = "Memory DB"  # type: ignore
 
             def get(self):
-                return self.router.db.hidden_secret
+                return self.router.db.hidden_secret  # type: ignore
 
         router = FlaskRouter("testing", views=[SomeView()], db=db)
 

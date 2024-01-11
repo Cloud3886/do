@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from typing import Any
 
 import flask.typing as ft
@@ -12,12 +13,34 @@ from components.lib.basic_routes.ui_view import UiView
 from components.lib.router.router import Router
 
 
+class AdaptedViewType(ABC, MethodView):
+    @classmethod
+    @abstractmethod
+    def initialize(cls, view: UiView):
+        pass
+
+    @classmethod
+    @abstractmethod
+    def _configure_methods(cls):
+        pass
+
+    @classmethod
+    @abstractmethod
+    def as_view(
+        cls,
+        name: str,
+        *class_args,
+        **class_kwargs,
+    ) -> ft.RouteCallable:
+        pass
+
+
 class FlaskViewAdapter:
     def __init__(self, router: Router, view: UiView) -> None:
         self.view = view
         self.router = router
 
-    def build_view_class(self) -> type[MethodView]:
+    def build_view_class(self) -> type[AdaptedViewType]:
         view_class = self._create_adapted_view_class()
         view_class.initialize(self.view)
         return view_class
@@ -25,8 +48,8 @@ class FlaskViewAdapter:
     def build_view_function(self) -> ft.RouteCallable:
         return self.build_view_class().as_view(self.view.name)
 
-    def _create_adapted_view_class(self) -> type[MethodView]:
-        class AdaptedView(MethodView):
+    def _create_adapted_view_class(self) -> type[AdaptedViewType]:
+        class AdaptedView(AdaptedViewType, MethodView):
             __name__ = self.view.name
             init_every_request = self.view.reloads
             view = self.view

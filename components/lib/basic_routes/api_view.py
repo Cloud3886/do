@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Sequence
 
 from components.lib.router.router import Router
 
@@ -8,12 +8,12 @@ http_methods = frozenset(
 
 
 class ApiView:
-    name: str = None
-    endpoint: str = None
+    name: str
+    endpoint: str
     reloads: bool = True
 
     def __init__(self) -> None:
-        self._class_args: list = []
+        self._class_args: tuple = tuple()
         self._class_kwargs: dict = {}
 
     def store_args(self, *args, **kwargs) -> None:

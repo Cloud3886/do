@@ -21,7 +21,7 @@ class ApiViewTester(InstanceTester):
         assert vars(view) == vars(self.view)
 
     @staticmethod
-    def create_view(endpoint: str, data="testing", name: str = None) -> ApiView:
+    def create_view(endpoint: str, data="testing", name: str | None = None) -> ApiView:
         path = endpoint
         view_name = name
 

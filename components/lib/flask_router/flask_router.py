@@ -51,12 +51,12 @@ class FlaskRouter(Router):
     def tester(self):
         return self.app.test_client()
 
-    def register_view(self, view: UiView, main: Blueprint = None):
+    def register_view(self, view: UiView, main: Blueprint | None = None):
         adapter = self._create_adapter(view)
         view_func = adapter.build_view_function()
         (main or self.app).add_url_rule(view.endpoint, view.name, view_func=view_func)
 
-    def register_route(self, route: AppRoute[UiView], main: Blueprint = None):
+    def register_route(self, route: AppRoute[UiView], main: Blueprint | None = None):
         bp = self._configure_route(route)
         (main or self.app).register_blueprint(bp)
 
@@ -99,7 +99,7 @@ class FlaskRouter(Router):
 
     def _initialize_teardowns(self):
         self._teardown_appcontext.init(
-            registrar=self.app.teardown_appcontext,
+            registrar=self.app.teardown_appcontext,  # type: ignore
             arg=self.app,
         )
 
@@ -117,15 +117,15 @@ class FlaskRouter(Router):
     @classmethod
     def _configure_db_session_with_flask(cls, db_manager: DatabaseManager):
         def get_flask_app_ctx() -> int:
-            return id(app_ctx._get_current_object())
+            return id(app_ctx._get_current_object())  # type: ignore
 
         db_manager.configure_session(get_flask_app_ctx)
 
     def _connect_db_session_with_app(self, db_manager: DatabaseManager):
-        self.app.session = db_manager.session
+        self.app.session = db_manager.session  # type: ignore
 
         def remove_session(app: Flask):
-            app.session.remove()
+            app.session.remove()  # type: ignore
 
         self.register_teardown_appcontext("remove_session", remove_session)
 

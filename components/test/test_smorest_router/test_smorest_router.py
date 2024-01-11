@@ -37,14 +37,14 @@ class TestSmorestRouter(FlaskRouterTester):
         db = DatabaseManager("sqlite:///")
         router = SmorestRouter("test_router", views=[create_view("/")], db=db)
         assert router.db
-        assert isinstance(router.app.session.registry, sql_tools.ScopedRegistry)
+        assert isinstance(router.app.session.registry, sql_tools.ScopedRegistry)  # type: ignore
 
         router.tester().get("/")
         router.tester().get("/")
 
     def test_view_init_state(self):
         db = DatabaseManager("sqlite:///")
-        db.hidden_secret = "In Memory DB"
+        db.hidden_secret = "In Memory DB"  # type: ignore
 
         class SomeView(OpenapiView):
             name = "some"
@@ -52,10 +52,10 @@ class TestSmorestRouter(FlaskRouterTester):
             reloads = True
 
             def init_state(self):
-                self.router.db.hidden_secret = "Memory DB"
+                self.router.db.hidden_secret = "Memory DB"  # type: ignore
 
             def get(self):
-                return self.router.db.hidden_secret
+                return self.router.db.hidden_secret  # type: ignore
 
         router = SmorestRouter("testing", views=[SomeView()], db=db)
 
@@ -139,8 +139,8 @@ class TestSmorestRouter(FlaskRouterTester):
         api3 = router.add_api(SmorestConfigTester.create_smorest_config("v2_long"), [])
 
         assert api2 == router.api
-        assert api1 == router.api_v1
-        assert api3 == router.api_v2_long
+        assert api1 == router.api_v1  # type: ignore
+        assert api3 == router.api_v2_long  # type: ignore
 
     def test_router_params(self):
         router = SmorestRouter(

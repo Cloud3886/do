@@ -95,8 +95,8 @@ class OpenapiView(UiView):
             def wrapped(*args, **kwargs):
                 return method(*args, **kwargs)
 
-            wrapped._viewdoc = deepcopy(getattr(wrapped, "_viewdoc", {}))
-            docs: list = wrapped._viewdoc.setdefault(decoration, [])
+            wrapped._viewdoc = deepcopy(getattr(wrapped, "_viewdoc", {}))  # type: ignore
+            docs: list = wrapped._viewdoc.setdefault(decoration, [])  # type: ignore
             docs.append(kwargs)
 
             return wrapped
