@@ -1,16 +1,18 @@
+from abc import abstractmethod
 from datetime import datetime, timedelta
-from typing import Any
-
-import jwt
+from typing import Any, Protocol
 
 
-class JwtTokenManager:
+class TokenManager(Protocol):
+    _secret: str
+    algorithm: str
+
     def __init__(
         self,
         secret: Any,
         algorithm: str | None = None,
     ) -> None:
-        self.__secret = secret
+        self._secret = secret
         self.algorithm = algorithm or "HS256"
 
     @staticmethod
@@ -26,12 +28,20 @@ class JwtTokenManager:
 
     def encode(self, payload: dict[str, Any]) -> str:
         payload = self._ensure_req_fields(payload)
-        token = jwt.encode(payload, self.__secret, algorithm=self.algorithm)
+        token = self._encode(payload)
         return token
 
     def decode(self, token: str) -> dict[str, Any]:
-        data = jwt.decode(token, self.__secret, algorithms=[self.algorithm])
+        data = self._decode(token)
         return data
+
+    @abstractmethod
+    def _encode(self, payload: dict[str, Any]) -> str:
+        pass
+
+    @abstractmethod
+    def _decode(self, token: str) -> dict[str, Any]:
+        pass
 
     def _ensure_req_fields(self, payload: dict[str, Any]) -> dict[str, Any]:
         payload = self._ensure_key(
