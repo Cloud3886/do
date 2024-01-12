@@ -21,6 +21,8 @@ flask-smorest = "^0.42.3"
 sqlalchemy = "^2.0.23"
 alembic = "^1.13.0"
 
+[tool.poetry.group.jwt.dependencies]
+pyjwt = "^2.8.0"
 
 [build-system]
 requires = ["poetry-core"]
