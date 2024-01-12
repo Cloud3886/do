@@ -4,7 +4,7 @@ from typing import Any
 import jwt
 
 
-class JwtToken:
+class JwtTokenManager:
     def __init__(
         self,
         secret: Any,
