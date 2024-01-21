@@ -3,6 +3,8 @@ import pytest
 import sqlalchemy.util as sql_tools
 from flask import Flask
 from flask_smorest import Api
+from werkzeug import Response
+from werkzeug.exceptions import HTTPException
 
 from components.lib.database_manager import DatabaseManager
 from components.lib.smorest_router import (
@@ -41,6 +43,34 @@ class TestSmorestRouter(FlaskRouterTester):
 
         router.tester().get("/")
         router.tester().get("/")
+
+    def test_router_error_handlers_configuration(self):
+        def error_handler1(error: Exception) -> Response:
+            return Response("error", 0)
+
+        def error_handler2(error: HTTPException) -> Response:
+            return Response("http error", error.code)
+
+        router = SmorestRouter(
+            "test_router",
+            error_handlers={Exception: error_handler1, HTTPException: error_handler2},
+        )
+
+        class TView(OpenapiView):
+            name = "test"
+            endpoint = "/"
+
+            def get(self):
+                None["error"]  # type: ignore
+
+        router.register_view(TView())
+        res = router.tester().get("/")
+        assert res.text == "error"
+        assert res.status_code == 0
+
+        res = router.tester().get("/error")
+        assert res.text == "http error"
+        assert res.status_code == 404
 
     def test_view_init_state(self):
         db = DatabaseManager("sqlite:///")

@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Callable
 
 from flask_smorest import Api, Blueprint
 
@@ -22,6 +22,7 @@ class SmorestRouter(FlaskRouter):
         openapi_spec: dict[SmorestConfig, list[AppRoute[OpenapiView]]] | None = None,
         config: object | None = None,
         db: DatabaseManager | None = None,
+        error_handlers: dict[type[Exception], Callable[[Any], Any]] = {},
     ) -> None:
         self._initialize_app(name)
         self._initialize_fields()
@@ -30,6 +31,7 @@ class SmorestRouter(FlaskRouter):
         self._initialize_views(views)
         self._initialize_routes(routes)
         self._initialize_openapi_specs(openapi_spec)
+        self._initialize_error_handlers(error_handlers)
         self._initialize_teardowns()
 
     def register_view(self, view: UiView, main: Blueprint | None = None):
