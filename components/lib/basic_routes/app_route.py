@@ -1,5 +1,5 @@
 import sys
-from typing import Generic, TypeVar
+from typing import Any, Callable, Generic, Type, TypeVar
 
 from components.lib.basic_routes.api_view import ApiView
 
@@ -13,6 +13,7 @@ class AppRoute(Generic[T]):
     subdomain: str | None = None
 
     description: str | None = None
+    error_handlers: dict[type[Exception], Callable[[Any], Any]] = {}
 
     def __init__(self) -> None:
         self._root = sys.modules[self.__module__].__name__

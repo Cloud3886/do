@@ -1,8 +1,13 @@
+import logging
+
 import pytest
 import sqlalchemy.util as sql_tools
-from flask import Flask, request
+from flask import Flask, abort, request
 from flask.testing import FlaskClient
+from werkzeug import Response
+from werkzeug.exceptions import HTTPException
 
+from components.lib.basic_routes.app_route import AppRoute
 from components.lib.basic_routes.ui_view import UiView
 from components.lib.database_manager import DatabaseManager
 from components.lib.flask_router.flask_router import FlaskRouter
@@ -24,6 +29,15 @@ class TestFlaskRouter(ClassTester):
         router = FlaskRouter("test_router")
         assert isinstance(router.app, Flask)
         assert router.app.import_name == "test_router"
+
+    def test_router_logging(
+        self,
+        router: FlaskRouter,
+        caplog: pytest.LogCaptureFixture,
+    ):
+        router.logger.setLevel(logging.INFO)
+        router.logger.info("Hello Logs")
+        assert "Hello Logs" in caplog.text
 
     def test_router_with_database(self):
         db = DatabaseManager("sqlite:///")
@@ -62,6 +76,54 @@ class TestFlaskRouter(ClassTester):
     #     with Server(router.run):
     #         res = requests.get(url)
     #         assert res.status_code == 200
+
+    def test_router_error_handlers_configuration(self):
+        def error_handler1(error: Exception) -> Response:
+            return Response("error", 0)
+
+        def error_handler2(error: HTTPException) -> Response:
+            return Response("http error", error.code)
+
+        router = FlaskRouter(
+            "test_router",
+            error_handlers={Exception: error_handler1, HTTPException: error_handler2},
+        )
+
+        class TView(UiView):
+            name = "test"
+            endpoint = "/"
+
+            def get(self):
+                None["error"]  # type: ignore
+
+        router.register_view(TView())
+        res = router.tester().get("/")
+        assert res.text == "error"
+        assert res.status_code == 0
+
+        res = router.tester().get("/error")
+        assert res.text == "http error"
+        assert res.status_code == 404
+
+    def test_router_error_handler_registration(self, router: FlaskRouter):
+        from werkzeug import Response
+
+        def error_handler(error: Exception) -> Response:
+            return Response("error test", 0)
+
+        router.register_error_handler(Exception, error_handler)
+
+        class TView(UiView):
+            name = "test"
+            endpoint = "/"
+
+            def get(self):
+                None["error"]  # type: ignore
+
+        router.register_view(TView())
+        res = router.tester().get("/")
+        assert res.text == "error test"
+        assert res.status_code == 0
 
     def test_router_registered_teardown_appcontext(self, router: FlaskRouter):
         assert len(router.app.teardown_appcontext_funcs) >= 1
@@ -300,6 +362,40 @@ class TestFlaskRouter(ClassTester):
         assert router.tester().get("/nest/nest2/").data == b"more test"
         assert router.tester().get("/nested/").data == b"testing"
         assert router.tester().get("/nested/test").data == b"testing"
+
+    def test_route_error_handler(self, router: FlaskRouter):
+        def error_handler1(error: Exception) -> Response:
+            return Response("error", 0)
+
+        def error_handler2(error: HTTPException) -> Response:
+            return Response("http error", error.code)
+
+        class TView(UiView):
+            name = "test"
+            endpoint = "/"
+
+            def get(self):
+                None["error"]  # type: ignore
+
+            def post(self):
+                abort(403)
+
+        class TRoute(AppRoute[UiView]):
+            name = "test"
+            error_handlers = {Exception: error_handler1, HTTPException: error_handler2}
+
+            def configure(self):
+                super().configure()
+                self.views = [TView()]
+
+        router.register_route(TRoute())
+        res = router.tester().get("/")
+        assert res.text == "error"
+        assert res.status_code == 0
+
+        res = router.tester().post("/", json={})
+        assert res.text == "http error"
+        assert res.status_code == 403
 
     def test_route_with_multi_methods(self, router: FlaskRouter):
         class SomeView(UiView):

@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Callable
 
 from flask import (
     Blueprint,
@@ -25,6 +25,7 @@ class FlaskRouter(Router):
         routes: list[AppRoute[UiView]] | None = None,
         config: object | None = None,
         db: DatabaseManager | None = None,
+        error_handlers: dict[type[Exception], Callable[[Any], Any]] = {},
     ) -> None:
         self._initialize_app(name)
         self._initialize_fields()
@@ -32,6 +33,7 @@ class FlaskRouter(Router):
         self._initialize_db(db)
         self._initialize_views(views)
         self._initialize_routes(routes)
+        self._initialize_error_handlers(error_handlers)
         self._initialize_teardowns()
 
     @staticmethod
@@ -69,6 +71,14 @@ class FlaskRouter(Router):
         else:
             return False
 
+    def register_error_handler(
+        self,
+        code_or_exception: type[Exception] | int,
+        f: Callable[[Any], Any],
+        main: Blueprint | None = None,
+    ):
+        (main or self.app).register_error_handler(code_or_exception, f)
+
     def register_teardown_appcontext(self, key: str, teardown: Teardown):
         self._teardown_appcontext.record_teardown(key, teardown)
 
@@ -76,6 +86,7 @@ class FlaskRouter(Router):
         self.app = self.create_app(name)
 
     def _initialize_fields(self):
+        self.logger = self.app.logger
         self.app.test_client_class = FlaskRouterTester
         self._teardown_appcontext = TeardownRecorder()
 
@@ -97,6 +108,12 @@ class FlaskRouter(Router):
         if db:
             self.register_db(db)
 
+    def _initialize_error_handlers(
+        self, error_handlers: dict[type[Exception], Callable[[Any], Any]]
+    ):
+        for exception, handler in error_handlers.items():
+            self.register_error_handler(exception, handler)
+
     def _initialize_teardowns(self):
         self._teardown_appcontext.init(
             registrar=self.app.teardown_appcontext,  # type: ignore
@@ -111,6 +128,9 @@ class FlaskRouter(Router):
 
         for nested_route in route.routes:
             self.register_route(nested_route, bp)
+
+        for error, handler in route.error_handlers.items():
+            self.register_error_handler(error, handler, bp)
 
         return bp
 
