@@ -18,12 +18,12 @@ class TokenManager(Protocol):
     @staticmethod
     def build_payload(
         sub: str,
-        expire_in_mins: int = 24 * 60,
+        expire_in_ms: int = 24 * 60 * 60 * 1000,
     ) -> dict[str, Any]:
         return {
             "sub": sub,
             "iat": datetime.utcnow(),
-            "exp": datetime.utcnow() + timedelta(minutes=expire_in_mins),
+            "exp": datetime.utcnow() + timedelta(milliseconds=expire_in_ms),
         }
 
     def encode(self, payload: dict[str, Any]) -> str:
