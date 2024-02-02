@@ -15,19 +15,7 @@ class TokenManager(Protocol):
         self._secret = secret
         self.algorithm = algorithm or "HS256"
 
-    @staticmethod
-    def build_payload(
-        sub: str,
-        expire_in_ms: int = 24 * 60 * 60 * 1000,
-    ) -> dict[str, Any]:
-        return {
-            "sub": sub,
-            "iat": datetime.utcnow(),
-            "exp": datetime.utcnow() + timedelta(milliseconds=expire_in_ms),
-        }
-
     def encode(self, payload: dict[str, Any]) -> str:
-        payload = self._ensure_req_fields(payload)
         token = self._encode(payload)
         return token
 
@@ -42,18 +30,3 @@ class TokenManager(Protocol):
     @abstractmethod
     def _decode(self, token: str) -> dict[str, Any]:
         pass
-
-    def _ensure_req_fields(self, payload: dict[str, Any]) -> dict[str, Any]:
-        payload = self._ensure_key(
-            payload, "exp", datetime.utcnow() + timedelta(days=1)
-        )
-        payload = self._ensure_key(payload, "iat", datetime.utcnow())
-
-        return payload
-
-    @staticmethod
-    def _ensure_key(payload: dict[str, Any], key: str, value: Any) -> dict[str, Any]:
-        if not payload.get(key):
-            payload[key] = value
-
-        return payload
