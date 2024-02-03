@@ -1,4 +1,4 @@
-from typing import Any, Callable
+from typing import Any, Callable, Self, cast
 
 from flask import (
     Blueprint,
@@ -20,8 +20,8 @@ class FlaskRouter:
         self,
         name: str,
         *,
-        views: list[UiView] | None = None,
-        routes: list[AppRoute[UiView]] | None = None,
+        views: list[UiView[Self]] | None = None,
+        routes: list[AppRoute[UiView[Self]]] | None = None,
         config: object | None = None,
         db: DatabaseManager | None = None,
         error_handlers: dict[type[Exception], Callable[[Any], Any]] = {},
@@ -52,12 +52,20 @@ class FlaskRouter:
     def tester(self):
         return self.app.test_client()
 
-    def register_view(self, view: UiView, main: Blueprint | None = None):
+    def register_view(
+        self,
+        view: UiView[Self],
+        main: Blueprint | None = None,
+    ):
         adapter = self._create_adapter(view)
         view_func = adapter.build_view_function()
         (main or self.app).add_url_rule(view.endpoint, view.name, view_func=view_func)
 
-    def register_route(self, route: AppRoute[UiView], main: Blueprint | None = None):
+    def register_route(
+        self,
+        route: AppRoute[UiView[Self]],
+        main: Blueprint | None = None,
+    ):
         bp = self._configure_route(route)
         (main or self.app).register_blueprint(bp)
 
@@ -94,12 +102,12 @@ class FlaskRouter:
             self.app.config.from_object(config)
             self.config = config
 
-    def _initialize_views(self, views: list[UiView] | None):
+    def _initialize_views(self, views: list[UiView[Self]] | None):
         if views:
             for view in views:
                 self.register_view(view)
 
-    def _initialize_routes(self, routes: list[AppRoute[UiView]] | None):
+    def _initialize_routes(self, routes: list[AppRoute[UiView[Self]]] | None):
         if routes:
             for route in routes:
                 self.register_route(route)
@@ -120,7 +128,7 @@ class FlaskRouter:
             arg=self.app,
         )
 
-    def _configure_route(self, route: AppRoute[UiView]) -> Blueprint:
+    def _configure_route(self, route: AppRoute[UiView[Self]]) -> Blueprint:
         bp = self._create_blueprint(route)
 
         for view in route.views:
@@ -149,8 +157,8 @@ class FlaskRouter:
 
         self.register_teardown_appcontext("remove_session", remove_session)
 
-    def _create_adapter(self, view: UiView) -> FlaskViewAdapter:
-        return FlaskViewAdapter(self, view)
+    def _create_adapter(self, view: UiView[Self]) -> FlaskViewAdapter:
+        return FlaskViewAdapter[Self](self, view)
 
     def _create_blueprint(self, route: AppRoute) -> Blueprint:
         return Blueprint(

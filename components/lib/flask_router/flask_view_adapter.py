@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any, Generic, Protocol, TypeVar
 
 import flask.typing as ft
 from flask import (
@@ -13,6 +13,9 @@ from components.lib.basic_routes.ui_view import UiView
 
 if TYPE_CHECKING:
     from components.lib.flask_router.flask_router import FlaskRouter
+
+
+F = TypeVar("F", bound="FlaskRouter")
 
 
 class AdaptedViewType(Protocol):
@@ -37,8 +40,8 @@ class AdaptedViewType(Protocol):
         pass
 
 
-class FlaskViewAdapter:
-    def __init__(self, router: "FlaskRouter", view: UiView) -> None:
+class FlaskViewAdapter(Generic[F]):
+    def __init__(self, router: F, view: UiView[F]) -> None:
         self.view = view
         self.router = router
 
@@ -64,7 +67,7 @@ class FlaskViewAdapter:
                 self.initialize(re_view)
 
             @classmethod
-            def initialize(cls, view: UiView):
+            def initialize(cls, view: UiView[F]):
                 cls.adapter._build_internal_view(view)
                 cls.adapter.view = view
                 cls.view = view
@@ -114,7 +117,7 @@ class FlaskViewAdapter:
 
         return AdaptedView
 
-    def _build_internal_view(self, view: UiView):
+    def _build_internal_view(self, view: UiView[F]):
         view._build(
             router=self.router,
             serialize=jsonify,

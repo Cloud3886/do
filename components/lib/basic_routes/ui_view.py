@@ -1,9 +1,9 @@
-from typing import TYPE_CHECKING, Any, Callable, Concatenate, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Concatenate, Generic, TypeVar
 
 from .api_view import ApiView
 
 if TYPE_CHECKING:
-    from components.lib.flask_router.flask_router import FlaskRouter
+    from components.lib.flask_router import FlaskRouter
 
 T = TypeVar("T", bound="FlaskRouter")
 

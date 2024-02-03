@@ -1,4 +1,4 @@
-from typing import Any, Callable
+from typing import Any, Callable, Self
 
 from flask_smorest import Api, Blueprint
 
@@ -17,9 +17,11 @@ class SmorestRouter(FlaskRouter):
         self,
         name: str,
         *,
-        views: list[UiView] | None = None,
-        routes: list[AppRoute[UiView]] | None = None,
-        openapi_spec: dict[SmorestConfig, list[AppRoute[OpenapiView]]] | None = None,
+        views: list[UiView[Self]] | None = None,
+        routes: list[AppRoute[UiView[Self]]] | None = None,
+        openapi_spec: (
+            dict[SmorestConfig, list[AppRoute[OpenapiView[Self]]]] | None
+        ) = None,
         config: object | None = None,
         db: DatabaseManager | None = None,
         error_handlers: dict[type[Exception], Callable[[Any], Any]] = {},
@@ -34,7 +36,7 @@ class SmorestRouter(FlaskRouter):
         self._initialize_error_handlers(error_handlers)
         self._initialize_teardowns()
 
-    def register_view(self, view: UiView, main: Blueprint | None = None):
+    def register_view(self, view: UiView[Self], main: Blueprint | None = None):
         adapter = self._create_adapter(view, main)
 
         if main:
@@ -44,13 +46,17 @@ class SmorestRouter(FlaskRouter):
             view_func = adapter.build_view_function()
             self.app.add_url_rule(view.endpoint, view.name, view_func=view_func)
 
-    def register_route_with_api(self, api: Api, route: AppRoute[OpenapiView]) -> None:
+    def register_route_with_api(
+        self, api: Api, route: AppRoute[OpenapiView[Self]]
+    ) -> None:
         config = self.apis[api]
         self._prepend_config_prefix_to_route(config, route)
         bp = self._configure_route(route)
         api.register_blueprint(bp)
 
-    def add_api(self, config: SmorestConfig, routes: list[AppRoute[OpenapiView]] = []):
+    def add_api(
+        self, config: SmorestConfig, routes: list[AppRoute[OpenapiView[Self]]] = []
+    ):
         self._register_openapi_config_with_app(config)
         api = self._create_openapi(config)
         self._store_openapi(api, config)
@@ -68,7 +74,8 @@ class SmorestRouter(FlaskRouter):
         self.apis: dict[Api, SmorestConfig] = {}
 
     def _initialize_openapi_specs(
-        self, openapi_spec: dict[SmorestConfig, list[AppRoute[OpenapiView]]] | None
+        self,
+        openapi_spec: dict[SmorestConfig, list[AppRoute[OpenapiView[Self]]]] | None,
     ):
         if openapi_spec:
             for config, routes in openapi_spec.items():
@@ -77,7 +84,7 @@ class SmorestRouter(FlaskRouter):
     def _prepend_config_prefix_to_route(
         self,
         config: SmorestConfig,
-        route: AppRoute[OpenapiView],
+        route: AppRoute[OpenapiView[Self]],
     ):
         config_has_prefix = (
             config.OPENAPI_URL_PREFIX and config.OPENAPI_URL_PREFIX != "/"
@@ -92,18 +99,18 @@ class SmorestRouter(FlaskRouter):
         )
         self.app.config[name_prefix + "OPENAPI_REDOC_PATH"] = config.OPENAPI_REDOC_PATH
         self.app.config[name_prefix + "OPENAPI_REDOC_URL"] = config.OPENAPI_REDOC_URL
-        self.app.config[
-            name_prefix + "OPENAPI_SWAGGER_UI_PATH"
-        ] = config.OPENAPI_SWAGGER_UI_PATH
-        self.app.config[
-            name_prefix + "OPENAPI_SWAGGER_UI_URL"
-        ] = config.OPENAPI_SWAGGER_UI_URL
-        self.app.config[
-            name_prefix + "OPENAPI_RAPIDOC_PATH"
-        ] = config.OPENAPI_RAPIDOC_PATH
-        self.app.config[
-            name_prefix + "OPENAPI_RAPIDOC_URL"
-        ] = config.OPENAPI_RAPIDOC_URL
+        self.app.config[name_prefix + "OPENAPI_SWAGGER_UI_PATH"] = (
+            config.OPENAPI_SWAGGER_UI_PATH
+        )
+        self.app.config[name_prefix + "OPENAPI_SWAGGER_UI_URL"] = (
+            config.OPENAPI_SWAGGER_UI_URL
+        )
+        self.app.config[name_prefix + "OPENAPI_RAPIDOC_PATH"] = (
+            config.OPENAPI_RAPIDOC_PATH
+        )
+        self.app.config[name_prefix + "OPENAPI_RAPIDOC_URL"] = (
+            config.OPENAPI_RAPIDOC_URL
+        )
 
     def _store_openapi(self, api: Api, config: SmorestConfig):
         self.apis[api] = config
@@ -126,10 +133,10 @@ class SmorestRouter(FlaskRouter):
 
     def _create_adapter(
         self,
-        view: UiView,
+        view: UiView[Self],
         blueprint: Blueprint | None = None,
     ) -> SmorestViewAdapter:
-        return SmorestViewAdapter(self, view, blueprint)
+        return SmorestViewAdapter[Self](self, view, blueprint)
 
     def _create_blueprint(self, route: AppRoute) -> Blueprint:
         bp = Blueprint(

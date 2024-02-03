@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 from flask_smorest import Blueprint
 
@@ -9,11 +9,14 @@ if TYPE_CHECKING:
     from components.lib.smorest_router.smorest_router import SmorestRouter
 
 
-class SmorestViewAdapter(FlaskViewAdapter):
+S = TypeVar("S", bound="SmorestRouter")
+
+
+class SmorestViewAdapter(FlaskViewAdapter[S]):
     def __init__(
         self,
-        router: "SmorestRouter",
-        view: UiView,
+        router: S,
+        view: UiView[S],
         blueprint: Blueprint | None,
     ) -> None:
         super().__init__(router, view)
