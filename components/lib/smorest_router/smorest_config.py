@@ -2,6 +2,8 @@ from dataclasses import dataclass, field
 from enum import Enum, StrEnum
 from typing import Protocol, runtime_checkable
 
+from components.utils.extensions import asdict
+
 
 class OpenapiSecurityScheme(Enum):
     pass
@@ -48,7 +50,7 @@ class SmorestSecurityScheme(Protocol):
     universally_enabled: bool
 
     def to_dict(self):
-        json = self.__dict__.copy()
+        json = asdict(self)
         if json.get("location"):
             json["in"] = json["location"]
             del json["location"]
