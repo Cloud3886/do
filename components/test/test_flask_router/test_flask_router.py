@@ -66,8 +66,10 @@ class TestFlaskRouter(ClassTester):
             SQLALCHEMY_DATABASE_URI = "sqlite:///"
             SECRET_KEY = "secretly secret"
 
-        router = FlaskRouter("test_router", config=Config())
+        config = Config()
+        router = FlaskRouter("test_router", config=config)
         assert router.app.config.get("SECRET_KEY") == "secretly secret"
+        assert router.config == config
 
     # def test_run(self, router: FlaskRouter):
     #     router.register_view(create_view("/"))

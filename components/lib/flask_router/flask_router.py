@@ -93,6 +93,7 @@ class FlaskRouter(Router):
     def _initialize_configuration(self, config: object | None):
         if config:
             self.app.config.from_object(config)
+            self.config = config
 
     def _initialize_views(self, views: list[UiView] | None):
         if views:

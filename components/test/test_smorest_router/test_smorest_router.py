@@ -44,6 +44,16 @@ class TestSmorestRouter(FlaskRouterTester):
         router.tester().get("/")
         router.tester().get("/")
 
+    def test_router_configuration(self):
+        class Config:
+            SQLALCHEMY_DATABASE_URI = "sqlite:///"
+            SECRET_KEY = "secretly secret"
+
+        config = Config()
+        router = SmorestRouter("test_router", config=config)
+        assert router.app.config.get("SECRET_KEY") == "secretly secret"
+        assert router.config == config
+
     def test_router_error_handlers_configuration(self):
         def error_handler1(error: Exception) -> Response:
             return Response("error", 0)
