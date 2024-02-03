@@ -1,5 +1,5 @@
 import sys
-from typing import Any, Callable, Generic, Type, TypeVar
+from typing import Any, Callable, Generic, TypeVar
 
 from components.lib.basic_routes.api_view import ApiView
 

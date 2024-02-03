@@ -1,14 +1,18 @@
+from typing import TYPE_CHECKING
+
 from flask_smorest import Blueprint
 
 from components.lib.basic_routes.ui_view import UiView
 from components.lib.flask_router import FlaskViewAdapter
-from components.lib.router.router import Router
+
+if TYPE_CHECKING:
+    from components.lib.smorest_router.smorest_router import SmorestRouter
 
 
 class SmorestViewAdapter(FlaskViewAdapter):
     def __init__(
         self,
-        router: Router,
+        router: "SmorestRouter",
         view: UiView,
         blueprint: Blueprint | None,
     ) -> None:

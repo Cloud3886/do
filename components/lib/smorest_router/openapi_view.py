@@ -1,10 +1,16 @@
 from copy import deepcopy
 from functools import wraps
+from typing import TYPE_CHECKING, TypeVar
 
 from components.lib.basic_routes.ui_view import UiView
 
+if TYPE_CHECKING:
+    from components.lib.smorest_router.smorest_router import SmorestRouter
 
-class OpenapiView(UiView):
+T = TypeVar("T", bound="SmorestRouter")
+
+
+class OpenapiView(UiView[T]):
     @classmethod
     def arguments(
         cls,

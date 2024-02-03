@@ -1,13 +1,14 @@
-from typing import Any, Sequence
+from typing import Any, Generic, TypeVar
 
-from components.lib.router.router import Router
+R = TypeVar("R")
+
 
 http_methods = frozenset(
     ["get", "post", "head", "options", "delete", "put", "trace", "patch"]
 )
 
 
-class ApiView:
+class ApiView(Generic[R]):
     name: str
     endpoint: str
     reloads: bool = True
@@ -25,7 +26,7 @@ class ApiView:
         self._class_args = args
         self._class_kwargs = kwargs
 
-    def _build(self, router: Router, *args, **kwargs):
+    def _build(self, router: R, *args, **kwargs):
         self.router = router
         self._ready = True
         self.init_state()

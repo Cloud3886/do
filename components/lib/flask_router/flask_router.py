@@ -9,14 +9,13 @@ from flask.globals import app_ctx
 from components.lib.basic_routes.app_route import AppRoute
 from components.lib.basic_routes.ui_view import UiView
 from components.lib.database_manager import DatabaseManager
-from components.lib.router.router import Router
-from components.lib.router.teardown_recorder import Teardown, TeardownRecorder
+from components.lib.flask_router.teardown_recorder import Teardown, TeardownRecorder
 
 from .flask_test_client import FlaskRouterTester
 from .flask_view_adapter import FlaskViewAdapter
 
 
-class FlaskRouter(Router):
+class FlaskRouter:
     def __init__(
         self,
         name: str,

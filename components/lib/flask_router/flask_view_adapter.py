@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 import flask.typing as ft
 from flask import (
@@ -10,7 +10,9 @@ from flask import (
 from flask.views import MethodView
 
 from components.lib.basic_routes.ui_view import UiView
-from components.lib.router.router import Router
+
+if TYPE_CHECKING:
+    from components.lib.flask_router.flask_router import FlaskRouter
 
 
 class AdaptedViewType(Protocol):
@@ -36,7 +38,7 @@ class AdaptedViewType(Protocol):
 
 
 class FlaskViewAdapter:
-    def __init__(self, router: Router, view: UiView) -> None:
+    def __init__(self, router: "FlaskRouter", view: UiView) -> None:
         self.view = view
         self.router = router
 

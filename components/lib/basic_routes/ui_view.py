@@ -1,11 +1,14 @@
-from typing import Any, Callable, Concatenate, Self
-
-from components.lib.router.router import Router
+from typing import TYPE_CHECKING, Any, Callable, Concatenate, TypeVar
 
 from .api_view import ApiView
 
+if TYPE_CHECKING:
+    from components.lib.flask_router.flask_router import FlaskRouter
 
-class UiView(ApiView):
+T = TypeVar("T", bound="FlaskRouter")
+
+
+class UiView(ApiView[T]):
     def serialize(self, data):
         serializer = getattr(self, "_serialize", None)
         if serializer:
@@ -18,7 +21,7 @@ class UiView(ApiView):
 
     def _build(
         self,
-        router: Router,
+        router: T,
         serialize: Callable[..., Any] | None = None,
         render_template: Callable[Concatenate[str, ...], str] | None = None,
         *args,
