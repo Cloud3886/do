@@ -96,10 +96,6 @@ class TestFlaskRouter(ClassTester):
             name = "test"
             endpoint = "/"
 
-            def init_state(self):
-                super().init_state()
-                self.router
-
             def get(self):
                 None["error"]  # type: ignore
 
