@@ -1,4 +1,4 @@
-from typing import Any, Callable, Self
+from typing import Any, Callable, Optional, Self, TypeVar
 
 from flask_smorest import Api, Blueprint
 
@@ -11,19 +11,21 @@ from .openapi_view import OpenapiView
 from .smorest_config import SmorestConfig
 from .smorest_view_adapter import SmorestViewAdapter
 
+C = TypeVar("C")
 
-class SmorestRouter(FlaskRouter):
+
+class SmorestRouter(FlaskRouter[C]):
     def __init__(
         self,
         name: str,
         *,
-        views: list[UiView[Self]] | None = None,
-        routes: list[AppRoute[UiView[Self]]] | None = None,
-        openapi_spec: (
-            dict[SmorestConfig, list[AppRoute[OpenapiView[Self]]]] | None
-        ) = None,
-        config: object | None = None,
-        db: DatabaseManager | None = None,
+        views: Optional[list[UiView[Self]]] = None,
+        routes: Optional[list[AppRoute[UiView[Self]]]] = None,
+        openapi_spec: Optional[
+            dict[SmorestConfig, list[AppRoute[OpenapiView[Self]]]]
+        ] = None,
+        config: Optional[C] = None,
+        db: Optional[DatabaseManager] = None,
         error_handlers: dict[type[Exception], Callable[[Any], Any]] = {},
     ) -> None:
         self._initialize_app(name)
@@ -36,7 +38,7 @@ class SmorestRouter(FlaskRouter):
         self._initialize_error_handlers(error_handlers)
         self._initialize_teardowns()
 
-    def register_view(self, view: UiView[Self], main: Blueprint | None = None):
+    def register_view(self, view: UiView[Self], main: Optional[Blueprint] = None):
         adapter = self._create_adapter(view, main)
 
         if main:
@@ -75,7 +77,7 @@ class SmorestRouter(FlaskRouter):
 
     def _initialize_openapi_specs(
         self,
-        openapi_spec: dict[SmorestConfig, list[AppRoute[OpenapiView[Self]]]] | None,
+        openapi_spec: Optional[dict[SmorestConfig, list[AppRoute[OpenapiView[Self]]]]],
     ):
         if openapi_spec:
             for config, routes in openapi_spec.items():
@@ -134,7 +136,7 @@ class SmorestRouter(FlaskRouter):
     def _create_adapter(
         self,
         view: UiView[Self],
-        blueprint: Blueprint | None = None,
+        blueprint: Optional[Blueprint] = None,
     ) -> SmorestViewAdapter:
         return SmorestViewAdapter[Self](self, view, blueprint)
 

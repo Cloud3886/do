@@ -1,3 +1,6 @@
+from typing import Optional
+
+
 class SmorestConfig:
     def __init__(
         self,
@@ -6,12 +9,12 @@ class SmorestConfig:
         openapi_version: str,
         name: str = "",
         url_prefix: str = "/",
-        swagger_ui: str | None = None,
-        redoc_ui: str | None = None,
-        rapidoc_ui: str | None = None,
-        swagger_ui_url: str | None = None,
-        redoc_ui_url: str | None = None,
-        rapidoc_ui_url: str | None = None,
+        swagger_ui: Optional[str] = None,
+        redoc_ui: Optional[str] = None,
+        rapidoc_ui: Optional[str] = None,
+        swagger_ui_url: Optional[str] = None,
+        redoc_ui_url: Optional[str] = None,
+        rapidoc_ui_url: Optional[str] = None,
     ) -> None:
         self.name = name
         self.API_TITLE = title
