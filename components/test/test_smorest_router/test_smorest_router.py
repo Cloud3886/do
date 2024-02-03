@@ -1,3 +1,5 @@
+from typing import Any, cast
+
 import marshmallow as ma
 import pytest
 import sqlalchemy.util as sql_tools
@@ -10,6 +12,10 @@ from components.lib.database_manager import DatabaseManager
 from components.lib.smorest_router import (
     OpenapiView,
     SmorestRouter,
+)
+from components.lib.smorest_router.smorest_config import (
+    SmorestBearerSecurityScheme,
+    SmorestConfig,
 )
 from components.test.test_basic_routes.test_app_route import AppRouteTester
 from components.test.test_flask_router.test_flask_router import (
@@ -134,6 +140,30 @@ class TestSmorestRouter(FlaskRouterTester):
         api = router.add_api(config)
         assert isinstance(api, Api)
 
+    def test_router_add_api_with_security_scheme(self, router: SmorestRouter):
+        config = SmorestConfig(
+            title="api",
+            version="v1",
+            openapi_version="3.0.0",
+            security_scheme=[
+                SmorestBearerSecurityScheme("bearerAuth"),
+                SmorestBearerSecurityScheme("Bearer Auth"),
+                SmorestBearerSecurityScheme("Uni Enabled", universally_enabled=True),
+            ],
+        )
+        api = router.add_api(config)
+
+        openapi_json = api.spec.to_dict()
+        security_schemes_json = openapi_json["components"]["securitySchemes"]
+        print(prettify(openapi_json))
+
+        # Test Arguments
+        assert "bearerAuth" in security_schemes_json
+        assert "Bearer Auth" in security_schemes_json
+
+        assert "Uni Enabled" in security_schemes_json
+        assert {"Uni Enabled": []} in openapi_json["security"]
+
     def test_router_add_api_with_spec(self, router: SmorestRouter):
         config = SmorestConfigTester.create_smorest_config()
         assert router.apis == {}
@@ -216,17 +246,6 @@ class TestSmorestRouter(FlaskRouterTester):
         assert router.tester().get("/").status_code == 200
         assert router.tester().get("/nest/").status_code == 200
 
-    def test_generate_openapi_json(self, router: SmorestRouter):
-        api = router.add_api(
-            SmorestConfigTester.create_smorest_config(ui="/ui"),
-            [create_route([create_view("/")])],
-        )
-
-        openapi_json = router.generate_openapi_json(api)
-        print(prettify(openapi_json))
-
-        assert "get" in openapi_json["paths"]["/"]
-
     def test_view_decorators(self, router: SmorestRouter):
         class One(ma.Schema):
             id = ma.fields.Int(dump_only=True)
@@ -254,12 +273,61 @@ class TestSmorestRouter(FlaskRouterTester):
                 """Post Testing"""
                 return "testing"
 
+            @OpenapiView.custom_doc(
+                **{
+                    "one": 11,
+                    "nested": {"three": 13},
+                    "listed": ["fourteen"],
+                    "nlisted": {"twelve": 12, "listed": ["fifteen"]},
+                    "lnested": [{"dnested": {"final": "end"}}],
+                }
+            )
+            @OpenapiView.custom_doc(
+                **{
+                    "one": 1,
+                    "two": 2,
+                    "nested": {"three": 3},
+                    "listed": ["four"],
+                    "nlisted": {
+                        "five": 5,
+                        "listed": ["six", "seven"],
+                    },
+                    "lnested": [
+                        {"eight": 8},
+                        {"nine": 9, "ten": 10},
+                        {"dnested": {"final": "end"}},
+                    ],
+                }
+            )
+            @OpenapiView.security_scheme("bearerAuth")
+            def delete(self, *args):
+                return "deleted"
+
+        view = SomeView()
+
         api = router.add_api(
-            SmorestConfigTester.create_smorest_config(), [create_route([SomeView()])]
+            SmorestConfigTester.create_smorest_config(), [create_route([view])]
         )
 
-        openapi_json = router.generate_openapi_json(api)
+        openapi_json = api.spec.to_dict()
         print(prettify(openapi_json))
+
+        # Test Custom Docs
+        apidoc: dict[str, Any] = view.delete._apidoc
+        assert apidoc["one"] == 11
+        assert apidoc["two"] == 2
+        assert apidoc["nested"]["three"] == 13
+        assert "four" in apidoc["listed"]
+        assert "fourteen" in apidoc["listed"]
+        assert apidoc["nlisted"]["five"] == 5
+        assert apidoc["nlisted"]["twelve"] == 12
+        assert "six" in apidoc["nlisted"]["listed"]
+        assert "seven" in apidoc["nlisted"]["listed"]
+        assert "fifteen" in apidoc["nlisted"]["listed"]
+        assert {"eight": 8} in apidoc["lnested"]
+        assert {"nine": 9, "ten": 10} in apidoc["lnested"]
+        assert {"dnested": {"final": "end"}} in apidoc["lnested"]
+        assert cast(list, apidoc["lnested"]).count({"dnested": {"final": "end"}}) == 2
 
         # Test Arguments
         assert "One" in openapi_json["components"]["schemas"]
@@ -272,5 +340,9 @@ class TestSmorestRouter(FlaskRouterTester):
         assert "200" in openapi_json["paths"]["/"]["get"]["responses"]
         assert "201" in openapi_json["paths"]["/"]["post"]["responses"]
 
+        # Test Security Scheme
+        assert {"bearerAuth": []} in openapi_json["paths"]["/"]["delete"]["security"]
+
+        # Test Summary
         assert openapi_json["paths"]["/"]["get"]["summary"] == "Get Testing"
         assert openapi_json["paths"]["/"]["post"]["summary"] == "Post Testing"

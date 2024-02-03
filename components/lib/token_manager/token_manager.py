@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, Optional, Protocol
+from typing import Any, Protocol
 
 
 class TokenManager(Protocol):
@@ -9,7 +9,7 @@ class TokenManager(Protocol):
     def __init__(
         self,
         secret: Any,
-        algorithm: Optional[str] = None,
+        algorithm: str | None = None,
     ) -> None:
         self._secret = secret
         self.algorithm = algorithm or "HS256"

@@ -1,4 +1,4 @@
-from typing import Any, Callable, Generic, Optional, Self, TypeVar, cast
+from typing import Any, Callable, Generic, Self, TypeVar
 
 from flask import (
     Blueprint,
@@ -22,10 +22,10 @@ class FlaskRouter(Generic[C]):
         self,
         name: str,
         *,
-        views: Optional[list[UiView[Self]]] = None,
-        routes: Optional[list[AppRoute[UiView[Self]]]] = None,
-        config: Optional[C] = None,
-        db: Optional[DatabaseManager] = None,
+        views: list[UiView[Self]] | None = None,
+        routes: list[AppRoute[UiView[Self]]] | None = None,
+        config: C | None = None,
+        db: DatabaseManager | None = None,
         error_handlers: dict[type[Exception], Callable[[Any], Any]] = {},
     ) -> None:
         self._initialize_app(name)
@@ -43,9 +43,9 @@ class FlaskRouter(Generic[C]):
 
     def run(
         self,
-        host: Optional[str] = None,
-        port: Optional[int] = None,
-        debug: Optional[bool] = None,
+        host: str | None = None,
+        port: int | None = None,
+        debug: bool | None = None,
         load_dotenv: bool = True,
         **options: Any,
     ):
@@ -57,7 +57,7 @@ class FlaskRouter(Generic[C]):
     def register_view(
         self,
         view: UiView[Self],
-        main: Optional[Blueprint] = None,
+        main: Blueprint | None = None,
     ):
         adapter = self._create_adapter(view)
         view_func = adapter.build_view_function()
@@ -66,7 +66,7 @@ class FlaskRouter(Generic[C]):
     def register_route(
         self,
         route: AppRoute[UiView[Self]],
-        main: Optional[Blueprint] = None,
+        main: Blueprint | None = None,
     ):
         bp = self._configure_route(route)
         (main or self.app).register_blueprint(bp)
@@ -84,7 +84,7 @@ class FlaskRouter(Generic[C]):
         self,
         code_or_exception: type[Exception] | int,
         f: Callable[[Any], Any],
-        main: Optional[Blueprint] = None,
+        main: Blueprint | None = None,
     ):
         (main or self.app).register_error_handler(code_or_exception, f)
 
@@ -99,22 +99,22 @@ class FlaskRouter(Generic[C]):
         self.app.test_client_class = FlaskRouterTester
         self._teardown_appcontext = TeardownRecorder()
 
-    def _initialize_configuration(self, config: Optional[C]):
+    def _initialize_configuration(self, config: C | None):
         if config:
             self.app.config.from_object(config)
             self.config = config
 
-    def _initialize_views(self, views: Optional[list[UiView[Self]]]):
+    def _initialize_views(self, views: list[UiView[Self]] | None):
         if views:
             for view in views:
                 self.register_view(view)
 
-    def _initialize_routes(self, routes: Optional[list[AppRoute[UiView[Self]]]]):
+    def _initialize_routes(self, routes: list[AppRoute[UiView[Self]]] | None):
         if routes:
             for route in routes:
                 self.register_route(route)
 
-    def _initialize_db(self, db: Optional[DatabaseManager]):
+    def _initialize_db(self, db: DatabaseManager | None):
         if db:
             self.register_db(db)
 

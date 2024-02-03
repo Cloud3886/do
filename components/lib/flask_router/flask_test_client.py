@@ -1,5 +1,4 @@
 from types import TracebackType
-from typing import Optional
 
 from flask.testing import FlaskClient
 
@@ -11,9 +10,9 @@ class FlaskRouterTester(FlaskClient):
 
     def __exit__(
         self,
-        exc_type: Optional[type],
-        exc_value: Optional[BaseException],
-        tb: Optional[TracebackType],
+        exc_type: type | None,
+        exc_value: BaseException | None,
+        tb: TracebackType | None,
     ) -> None:
         self.application.testing = False
         return super().__exit__(exc_type, exc_value, tb)

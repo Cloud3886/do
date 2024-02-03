@@ -10,17 +10,17 @@ class SmorestConfigTester(InstanceTester):
         self.config = config
 
     def test_has_title(self):
-        assert self.config.API_TITLE
+        assert self.config.title
 
     def test_has_version(self):
-        assert self.config.API_VERSION
+        assert self.config.version
 
     def test_has_openapi_version(self):
-        assert self.config.OPENAPI_VERSION
+        assert self.config.openapi_version
 
     def test_has_prefix(self):
-        assert self.config.OPENAPI_URL_PREFIX
-        assert self.config.OPENAPI_URL_PREFIX.startswith("/")
+        assert self.config.url_prefix
+        assert self.config.url_prefix.startswith("/")
 
     @staticmethod
     def create_smorest_config(

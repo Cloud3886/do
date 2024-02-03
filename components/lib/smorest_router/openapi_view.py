@@ -1,8 +1,9 @@
 from copy import deepcopy
 from functools import wraps
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from components.lib.basic_routes.ui_view import UiView
+from components.lib.smorest_router.smorest_config import SmorestSecurityScheme
 
 if TYPE_CHECKING:
     from components.lib.smorest_router.smorest_router import SmorestRouter
@@ -86,6 +87,11 @@ class OpenapiView(UiView[T]):
             success=success,
         )
 
+    @classmethod
+    def security_scheme(cls, scheme: SmorestSecurityScheme | str):
+        scheme_id = cast(str | None, getattr(scheme, "id", None)) or scheme
+        return cls.custom_doc(manual_doc={"security": [{scheme_id: []}]})
+
     # @staticmethod
     # def paginate():
     #     pass
@@ -93,6 +99,10 @@ class OpenapiView(UiView[T]):
     # @staticmethod
     # def etag():
     #     pass
+
+    @classmethod
+    def custom_doc(cls, **kwargs):
+        return cls._add_viewdoc("custom", **kwargs)
 
     @classmethod
     def _add_viewdoc(cls, decoration: str, **kwargs):
