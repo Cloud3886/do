@@ -49,7 +49,7 @@ class SmorestSecurityScheme(Protocol):
     type: OpenapiSecurityType
     universally_enabled: bool
 
-    def to_dict(self):
+    def asdict(self):
         json = asdict(self)
         if json.get("location"):
             json["in"] = json["location"]

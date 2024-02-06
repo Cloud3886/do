@@ -113,7 +113,7 @@ class SmorestRouter(FlaskRouter[C]):
     def _register_openapi_security_scheme(
         self, api: Api, scheme: SmorestSecurityScheme
     ):
-        api.spec.components.security_scheme(scheme.id, scheme.to_dict())
+        api.spec.components.security_scheme(scheme.id, scheme.asdict())
         if scheme.universally_enabled:
             security = api.spec.options.setdefault("security", [])
             api.spec.options["security"] = deepset(security, [{scheme.id: []}])
