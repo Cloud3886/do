@@ -25,3 +25,13 @@ class TestAesEncrypter(ClassTester):
     def test_key_generator(self):
         key = AesEncrypter.generate_key()
         assert key
+
+    def test_hash_generator(self, encrypter: Encrypter):
+        sub = "Oh My God"
+        hash = encrypter.hash(sub)
+        assert hash
+
+    def test_hash_check(self, encrypter: Encrypter):
+        sub = "Oh My God"
+        hash = encrypter.hash(sub)
+        assert encrypter.check_hash(sub, hash)

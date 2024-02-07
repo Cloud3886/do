@@ -2,6 +2,8 @@ import base64
 import hashlib
 
 from Crypto.Cipher import AES
+from Crypto.Hash import SHA256
+from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Random import get_random_bytes
 from Crypto.Random import new as random
 
@@ -22,18 +24,31 @@ class AesEncrypter(Encrypter):
         enc = cipher.encrypt(raw.encode())
         return base64.b64encode(iv + enc).decode("utf-8")
 
-    def _decrypt(self, hash: str) -> str:
-        enc = base64.b64decode(hash)
+    def _decrypt(self, data: str) -> str:
+        enc = base64.b64decode(data)
         iv = enc[: AES.block_size]
         cipher = AES.new(self.key, AES.MODE_CBC, iv)
         dnc = cipher.decrypt(enc[AES.block_size :])
         return self._unpad(dnc).decode()
 
+    def _hash(self, data: str) -> str:
+        hash_bytes = PBKDF2(data, self.key)
+        hash = self._decode_random_bytes(hash_bytes)
+        return hash
+
     @classmethod
     def _generate_key(cls) -> str:
-        urandom = get_random_bytes(cls.block_size)
-        key = base64.b64encode(urandom).decode()
+        salt = cls._generate_salt()
+        key = cls._decode_random_bytes(salt)
         return key
+
+    @classmethod
+    def _generate_salt(cls) -> bytes:
+        return get_random_bytes(cls.block_size)
+
+    @classmethod
+    def _decode_random_bytes(cls, random: bytes) -> str:
+        return base64.b64encode(random).decode()
 
     def _pad(self, raw: str) -> str:
         s = raw

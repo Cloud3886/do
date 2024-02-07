@@ -9,12 +9,20 @@ class Encrypter(Protocol):
         self._secret = secret
 
     def encrypt(self, data: str) -> str:
-        token = self._encrypt(data)
-        return token
+        enc = self._encrypt(data)
+        return enc
 
-    def decrypt(self, hash: str) -> str:
-        data = self._decrypt(hash)
+    def decrypt(self, data: str) -> str:
+        data = self._decrypt(data)
         return data
+
+    def hash(self, data: str) -> str:
+        data = self._hash(data)
+        return data
+
+    def check_hash(self, data: str, hash: str) -> bool:
+        new_hash = self.hash(data)
+        return new_hash == hash
 
     @classmethod
     def generate_key(cls) -> str:
@@ -29,7 +37,16 @@ class Encrypter(Protocol):
     def _decrypt(self, hash: str) -> str:
         pass
 
+    @abstractmethod
+    def _hash(self, data: str) -> str:
+        pass
+
     @classmethod
     @abstractmethod
     def _generate_key(cls) -> str:
+        pass
+
+    @classmethod
+    @abstractmethod
+    def _generate_salt(cls) -> bytes:
         pass
