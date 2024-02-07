@@ -32,7 +32,7 @@ class AesEncrypter(Encrypter):
     @classmethod
     def _generate_key(cls) -> str:
         urandom = get_random_bytes(cls.block_size)
-        key = base64.b64encode(urandom).decode("utf-8")
+        key = base64.b64encode(urandom).decode()
         return key
 
     def _pad(self, raw: str) -> str:

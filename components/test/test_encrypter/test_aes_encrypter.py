@@ -8,8 +8,7 @@ from components.test._components._testers import ClassTester
 class TestAesEncrypter(ClassTester):
     @pytest.fixture
     def encrypter(self) -> Encrypter:
-        secret = AesEncrypter.generate_key()
-        encrypter = AesEncrypter(secret)
+        encrypter = AesEncrypter("secret")
         return encrypter
 
     def test_token_encoder(self, encrypter: Encrypter):
@@ -22,3 +21,7 @@ class TestAesEncrypter(ClassTester):
         hash = encrypter.encrypt(sub)
         payload = encrypter.decrypt(hash)
         assert payload == sub
+
+    def test_key_generator(self):
+        key = AesEncrypter.generate_key()
+        assert key
