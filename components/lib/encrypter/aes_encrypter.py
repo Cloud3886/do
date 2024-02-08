@@ -1,4 +1,3 @@
-import base64
 import hashlib
 
 from Crypto.Cipher import AES
@@ -15,40 +14,34 @@ class AesEncrypter(Encrypter):
 
     def __init__(self, secret: str) -> None:
         super().__init__(secret)
-        self.key = hashlib.sha256(secret.encode()).digest()
+        self.key = self._hash_without_salt(secret)
 
     def _encrypt(self, data: str) -> str:
         raw = self._pad(data)
         iv = random().read(AES.block_size)
         cipher = AES.new(self.key, AES.MODE_CBC, iv)
-        enc = cipher.encrypt(raw.encode())
-        return base64.urlsafe_b64encode(iv + enc).decode("utf-8")
+        enc = cipher.encrypt(raw.encode(self.encoding))
+        return self._encode_bytes(iv + enc)
 
     def _decrypt(self, data: str) -> str:
-        enc = base64.urlsafe_b64decode(data)
+        enc = self._decode_bytes(data)
         iv = enc[: AES.block_size]
         cipher = AES.new(self.key, AES.MODE_CBC, iv)
         dnc = cipher.decrypt(enc[AES.block_size :])
-        return self._unpad(dnc).decode()
+        return self._unpad(dnc).decode(self.encoding)
 
-    def _hash(self, data: str) -> str:
-        hash_bytes = PBKDF2(data, self.key)
-        hash = self._decode_random_bytes(hash_bytes)
-        return hash
+    def _hash_with_salt(self, data: str, salt: bytes) -> bytes:
+        return PBKDF2(data, salt, 32, hmac_hash_module=SHA256)
 
-    @classmethod
-    def _generate_key(cls) -> str:
-        salt = cls._generate_salt()
-        key = cls._decode_random_bytes(salt)
-        return key
+    def _hash_without_salt(self, data: str) -> bytes:
+        return hashlib.sha256(data.encode()).digest()
+
+    def _hash(self, data: str) -> bytes:
+        return self._hash_with_salt(data, self.key)
 
     @classmethod
     def _generate_salt(cls) -> bytes:
         return get_random_bytes(cls.block_size)
-
-    @classmethod
-    def _decode_random_bytes(cls, random: bytes) -> str:
-        return base64.urlsafe_b64encode(random).decode()
 
     def _pad(self, raw: str) -> str:
         s = raw

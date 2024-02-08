@@ -1,9 +1,11 @@
+import base64
 from abc import abstractmethod
 from typing import Any, Protocol
 
 
 class Encrypter(Protocol):
     _secret: str
+    encoding: str = "utf-8"
 
     def __init__(self, secret: str) -> None:
         self._secret = secret
@@ -17,8 +19,8 @@ class Encrypter(Protocol):
         return data
 
     def hash(self, data: str) -> str:
-        data = self._hash(data)
-        return data
+        hash_bytes = self._hash(data)
+        return self._encode_bytes(hash_bytes)
 
     def check_hash(self, data: str, hash: str) -> bool:
         new_hash = self.hash(data)
@@ -29,6 +31,20 @@ class Encrypter(Protocol):
         data = cls._generate_key()
         return data
 
+    @classmethod
+    def _generate_key(cls) -> str:
+        salt = cls._generate_salt()
+        key = cls._encode_bytes(salt)
+        return key
+
+    @classmethod
+    def _encode_bytes(cls, data: bytes) -> str:
+        return base64.urlsafe_b64encode(data).decode(cls.encoding)
+
+    @classmethod
+    def _decode_bytes(cls, data: bytes | str) -> bytes:
+        return base64.urlsafe_b64decode(data)
+
     @abstractmethod
     def _encrypt(self, data: str) -> str:
         pass
@@ -38,12 +54,7 @@ class Encrypter(Protocol):
         pass
 
     @abstractmethod
-    def _hash(self, data: str) -> str:
-        pass
-
-    @classmethod
-    @abstractmethod
-    def _generate_key(cls) -> str:
+    def _hash(self, data: str) -> bytes:
         pass
 
     @classmethod
