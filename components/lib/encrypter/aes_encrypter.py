@@ -22,10 +22,10 @@ class AesEncrypter(Encrypter):
         iv = random().read(AES.block_size)
         cipher = AES.new(self.key, AES.MODE_CBC, iv)
         enc = cipher.encrypt(raw.encode())
-        return base64.b64encode(iv + enc).decode("utf-8")
+        return base64.urlsafe_b64encode(iv + enc).decode("utf-8")
 
     def _decrypt(self, data: str) -> str:
-        enc = base64.b64decode(data)
+        enc = base64.urlsafe_b64decode(data)
         iv = enc[: AES.block_size]
         cipher = AES.new(self.key, AES.MODE_CBC, iv)
         dnc = cipher.decrypt(enc[AES.block_size :])
@@ -48,7 +48,7 @@ class AesEncrypter(Encrypter):
 
     @classmethod
     def _decode_random_bytes(cls, random: bytes) -> str:
-        return base64.b64encode(random).decode()
+        return base64.urlsafe_b64encode(random).decode()
 
     def _pad(self, raw: str) -> str:
         s = raw
