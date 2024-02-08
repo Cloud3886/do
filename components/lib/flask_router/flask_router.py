@@ -100,6 +100,7 @@ class FlaskRouter(Generic[C]):
         self._teardown_appcontext = TeardownRecorder()
 
     def _initialize_configuration(self, config: C | None):
+        self.config: C | None = None
         if config:
             self.app.config.from_object(config)
             self.config = config
@@ -115,6 +116,7 @@ class FlaskRouter(Generic[C]):
                 self.register_route(route)
 
     def _initialize_db(self, db: DatabaseManager | None):
+        self.db: DatabaseManager | None
         if db:
             self.register_db(db)
 
