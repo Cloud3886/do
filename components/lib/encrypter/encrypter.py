@@ -1,9 +1,8 @@
 import base64
 import hashlib
 from abc import abstractmethod
-from math import ceil
 from os import urandom
-from typing import Any, Protocol
+from typing import Protocol
 
 
 class Encrypter(Protocol):
