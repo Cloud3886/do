@@ -6,8 +6,9 @@ from flask_smorest import Blueprint
 
 from components.lib.basic_routes.app_route import AppRoute
 from components.lib.basic_routes.ui_view import UiView
-from components.lib.database_manager.database_manager import DatabaseManager
 from components.lib.flask_router import FlaskRouter
+from components.lib.storage_manager import DatabaseManager
+from components.lib.storage_manager.storage_manager import StorageManager
 from components.utils.deepset import deepset
 
 from .openapi_view import OpenapiView
@@ -32,13 +33,13 @@ class SmorestRouter(FlaskRouter[C]):
             dict[SmorestConfig, list[AppRoute[OpenapiView[Self]]]] | None
         ) = None,
         config: C | None = None,
-        db: DatabaseManager | None = None,
+        storage: StorageManager | None = None,
         error_handlers: dict[type[Exception], Callable[[Any], Any]] = {},
     ) -> None:
         self._initialize_app(name)
         self._initialize_fields()
         self._initialize_configuration(config)
-        self._initialize_db(db)
+        self._initialize_storage(storage)
         self._initialize_views(views)
         self._initialize_routes(routes)
         self._initialize_openapi_specs(openapi_spec)

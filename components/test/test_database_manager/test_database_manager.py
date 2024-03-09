@@ -1,6 +1,6 @@
 import pytest
 
-from components.lib.database_manager import DatabaseManager
+from components.lib.storage_manager import DatabaseManager
 from components.test._components._testers import ClassTester
 
 

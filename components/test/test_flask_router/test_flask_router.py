@@ -1,5 +1,4 @@
 import logging
-from typing import Any, Callable, Concatenate
 
 import pytest
 import sqlalchemy.util as sql_tools
@@ -10,8 +9,9 @@ from werkzeug.exceptions import HTTPException
 
 from components.lib.basic_routes.app_route import AppRoute
 from components.lib.basic_routes.ui_view import UiView
-from components.lib.database_manager import DatabaseManager
 from components.lib.flask_router.flask_router import FlaskRouter
+from components.lib.storage_manager import DatabaseManager
+from components.lib.storage_manager.storage_manager import StorageManager
 from components.test._components._testers import ClassTester
 from components.test.test_basic_routes.test_app_route import AppRouteTester
 from components.test.test_basic_routes.test_ui_view import UiViewTester
@@ -42,8 +42,9 @@ class TestFlaskRouter(ClassTester):
 
     def test_router_with_database(self):
         db = DatabaseManager("sqlite:///")
-        router = FlaskRouter("test_router", views=[create_view("/")], db=db)
-        assert router.db
+        storage = StorageManager(db=db)
+        router = FlaskRouter("test_router", views=[create_view("/")], storage=storage)
+        assert router.storage.db
         assert isinstance(router.app.session.registry, sql_tools.ScopedRegistry)  # type: ignore
 
         router.tester().get("/")
@@ -51,11 +52,11 @@ class TestFlaskRouter(ClassTester):
 
     def test_database_registration(self, router: FlaskRouter):
         db = DatabaseManager("sqlite:///")
-
+        storage = StorageManager(db=db)
         router.register_view(create_view("/"))
-        router.register_db(db)
+        router.register_storage(storage)
 
-        assert router.db
+        assert router.storage.db
         assert router.app.session  # type: ignore
         assert isinstance(router.app.session.registry, sql_tools.ScopedRegistry)  # type: ignore
 
@@ -196,6 +197,7 @@ class TestFlaskRouter(ClassTester):
 
     def test_view_init_state(self):
         db = DatabaseManager("sqlite:///")
+        storage = StorageManager(db=db)
         db.hidden_secret = "In Memory DB"  # type: ignore
 
         class SomeView(UiView):
@@ -204,12 +206,12 @@ class TestFlaskRouter(ClassTester):
             reloads = True
 
             def init_state(self):
-                self.router.db.hidden_secret = "Memory DB"  # type: ignore
+                self.router.storage.db.hidden_secret = "Memory DB"  # type: ignore
 
             def get(self):
-                return self.router.db.hidden_secret  # type: ignore
+                return self.router.storage.db.hidden_secret  # type: ignore
 
-        router = FlaskRouter("testing", views=[SomeView()], db=db)
+        router = FlaskRouter("testing", views=[SomeView()], storage=storage)
 
         res = router.tester().get("/")
         assert res.data == b"Memory DB"

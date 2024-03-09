@@ -7,7 +7,7 @@ from typing import Callable
 from alembic.migration import MigrationContext
 from alembic.operations import Operations
 
-from components.lib.database_manager.database_manager import DatabaseManager
+from components.lib.storage_manager import DatabaseManager
 
 
 class AlembicMigrator:

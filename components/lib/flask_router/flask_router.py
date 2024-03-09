@@ -8,8 +8,9 @@ from flask.globals import app_ctx
 
 from components.lib.basic_routes.app_route import AppRoute
 from components.lib.basic_routes.ui_view import UiView
-from components.lib.database_manager import DatabaseManager
 from components.lib.flask_router.teardown_recorder import Teardown, TeardownRecorder
+from components.lib.storage_manager import DatabaseManager
+from components.lib.storage_manager.storage_manager import StorageManager
 
 from .flask_test_client import FlaskRouterTester
 from .flask_view_adapter import FlaskViewAdapter
@@ -25,13 +26,13 @@ class FlaskRouter(Generic[C]):
         views: list[UiView[Self]] | None = None,
         routes: list[AppRoute[UiView[Self]]] | None = None,
         config: C | None = None,
-        db: DatabaseManager | None = None,
+        storage: StorageManager | None = None,
         error_handlers: dict[type[Exception], Callable[[Any], Any]] = {},
     ) -> None:
         self._initialize_app(name)
         self._initialize_fields()
         self._initialize_configuration(config)
-        self._initialize_db(db)
+        self._initialize_storage(storage)
         self._initialize_views(views)
         self._initialize_routes(routes)
         self._initialize_error_handlers(error_handlers)
@@ -71,11 +72,12 @@ class FlaskRouter(Generic[C]):
         bp = self._configure_route(route)
         (main or self.app).register_blueprint(bp)
 
-    def register_db(self, db: DatabaseManager) -> bool:
-        if not hasattr(self, "db"):
-            self.db = db
-            self._configure_db_session_with_flask(db)
-            self._connect_db_session_with_app(db)
+    def register_storage(self, storage: StorageManager) -> bool:
+        if not hasattr(self, "storage"):
+            self.storage = storage
+            if storage.db:
+                self._configure_db_session_with_flask(storage.db)
+                self._connect_db_session_with_app(storage.db)
             return True
         else:
             return False
@@ -100,7 +102,7 @@ class FlaskRouter(Generic[C]):
         self._teardown_appcontext = TeardownRecorder()
 
     def _initialize_configuration(self, config: C | None):
-        self.config: C | None = None
+        self.config: C
         if config:
             self.app.config.from_object(config)
             self.config = config
@@ -115,10 +117,10 @@ class FlaskRouter(Generic[C]):
             for route in routes:
                 self.register_route(route)
 
-    def _initialize_db(self, db: DatabaseManager | None):
-        self.db: DatabaseManager | None
-        if db:
-            self.register_db(db)
+    def _initialize_storage(self, storage: StorageManager | None):
+        self.storage: StorageManager
+        if storage:
+            self.register_storage(storage)
 
     def _initialize_error_handlers(
         self, error_handlers: dict[type[Exception], Callable[[Any], Any]]

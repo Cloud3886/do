@@ -17,9 +17,10 @@ flask = "^3.0.0"
 [tool.poetry.group.smorest_router.dependencies]
 flask-smorest = "^0.42.3"
 
-[tool.poetry.group.database_manager.dependencies]
+[tool.poetry.group.storage_manager.dependencies]
 sqlalchemy = "^2.0.23"
 alembic = "^1.13.0"
+redis = "^5.0.2"
 
 [tool.poetry.group.token_manager.dependencies]
 pyjwt = "^2.8.0"

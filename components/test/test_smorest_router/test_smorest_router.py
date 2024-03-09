@@ -8,7 +8,6 @@ from flask_smorest import Api
 from werkzeug import Response
 from werkzeug.exceptions import HTTPException
 
-from components.lib.database_manager import DatabaseManager
 from components.lib.smorest_router import (
     OpenapiView,
     SmorestRouter,
@@ -17,6 +16,8 @@ from components.lib.smorest_router.smorest_config import (
     SmorestBearerSecurityScheme,
     SmorestConfig,
 )
+from components.lib.storage_manager import DatabaseManager
+from components.lib.storage_manager.storage_manager import StorageManager
 from components.test.test_basic_routes.test_app_route import AppRouteTester
 from components.test.test_flask_router.test_flask_router import (
     TestFlaskRouter as FlaskRouterTester,
@@ -43,8 +44,9 @@ class TestSmorestRouter(FlaskRouterTester):
 
     def test_router_with_database(self):
         db = DatabaseManager("sqlite:///")
-        router = SmorestRouter("test_router", views=[create_view("/")], db=db)
-        assert router.db
+        storage = StorageManager(db=db)
+        router = SmorestRouter("test_router", views=[create_view("/")], storage=storage)
+        assert router.storage.db
         assert isinstance(router.app.session.registry, sql_tools.ScopedRegistry)  # type: ignore
 
         router.tester().get("/")
@@ -90,6 +92,7 @@ class TestSmorestRouter(FlaskRouterTester):
 
     def test_view_init_state(self):
         db = DatabaseManager("sqlite:///")
+        storage = StorageManager(db=db)
         db.hidden_secret = "In Memory DB"  # type: ignore
 
         class SomeView(OpenapiView):
@@ -98,12 +101,12 @@ class TestSmorestRouter(FlaskRouterTester):
             reloads = True
 
             def init_state(self):
-                self.router.db.hidden_secret = "Memory DB"  # type: ignore
+                self.router.storage.db.hidden_secret = "Memory DB"  # type: ignore
 
             def get(self):
-                return self.router.db.hidden_secret  # type: ignore
+                return self.router.storage.db.hidden_secret  # type: ignore
 
-        router = SmorestRouter("testing", views=[SomeView()], db=db)
+        router = SmorestRouter("testing", views=[SomeView()], storage=storage)
 
         res = router.tester().get("/")
         assert res.data == b"Memory DB"
