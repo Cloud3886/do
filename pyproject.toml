@@ -28,6 +28,11 @@ pyjwt = "^2.8.0"
 [tool.poetry.group.encrypter.dependencies]
 pycryptodome = "^3.20.0"
 
+[tool.poetry.group.gmail_client.dependencies]
+google-api-python-client = "^2.121.0"
+google-auth-httplib2 = "^0.2.0"
+google-auth-oauthlib = "^1.2.0"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
