@@ -7,7 +7,6 @@ from flask_smorest import Blueprint
 from components.lib.basic_routes.app_route import AppRoute
 from components.lib.basic_routes.ui_view import UiView
 from components.lib.flask_router import FlaskRouter
-from components.lib.storage_manager import DatabaseManager
 from components.lib.storage_manager.storage_manager import StorageManager
 from components.utils.deepset import deepset
 

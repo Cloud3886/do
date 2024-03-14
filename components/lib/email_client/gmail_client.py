@@ -45,6 +45,7 @@ class GmailTokenFileStore(GmailTokenStore):
 class GmailClient(EmailClient):
     scopes = ["https://www.googleapis.com/auth/gmail.modify"]
     local_server_port = 60131
+    authorize_locally = True
 
     def __init__(self, client_secret_path: str, token_store: GmailTokenStore) -> None:
         self.token_store = token_store
@@ -60,7 +61,16 @@ class GmailClient(EmailClient):
                 flow = InstalledAppFlow.from_client_secrets_file(
                     client_secret_path, self.scopes
                 )
-                creds = flow.run_local_server(port=self.local_server_port)
+                creds = self._authorization_flow(flow)
+        return creds
+
+    def _authorization_flow(self, flow: InstalledAppFlow) -> Credentials:
+        if self.authorize_locally:
+            creds = flow.run_local_server(port=self.local_server_port)
+        else:
+            creds = flow.run_local_server(
+                port=self.local_server_port, open_browser=False
+            )
         return creds
 
     def _build_service(self, credentials: Credentials):
