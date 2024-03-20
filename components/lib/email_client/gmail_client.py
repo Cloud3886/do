@@ -65,12 +65,7 @@ class GmailClient(EmailClient):
         return creds
 
     def _authorization_flow(self, flow: InstalledAppFlow) -> Credentials:
-        if self.authorize_locally:
-            creds = flow.run_local_server(port=self.local_server_port)
-        else:
-            creds = flow.run_local_server(
-                port=self.local_server_port, open_browser=False
-            )
+        creds = flow.run_local_server(port=self.local_server_port, open_browser=False)
         return creds
 
     def _build_service(self, credentials: Credentials):
