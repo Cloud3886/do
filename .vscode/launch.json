@@ -19,7 +19,7 @@
             "name": "Python Debugger: Module",
             "type": "debugpy",
             "request": "launch",
-            "module": "lib.run",
+            "module": "lib.main",
             "console": "internalConsole",
             "justMyCode": false
         },
