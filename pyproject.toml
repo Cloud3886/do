@@ -1,0 +1,49 @@
+[tool.poetry]
+name = "components"
+version = "0.1.0"
+description = ""
+authors = []
+packages = [{ include = "components" }]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+[tool.poetry.group.test.dependencies]
+pytest-cov = "^4.1.0"
+
+[tool.poetry.group.flask_router.dependencies]
+flask = "^3.0.0"
+
+[tool.poetry.group.smorest_router.dependencies]
+flask-smorest = "^0.42.3"
+
+[tool.poetry.group.storage_manager.dependencies]
+sqlalchemy = "^2.0.23"
+alembic = "^1.13.0"
+redis = "^5.0.2"
+
+[tool.poetry.group.token_manager.dependencies]
+pyjwt = "^2.8.0"
+
+[tool.poetry.group.encrypter.dependencies]
+pycryptodome = "^3.20.0"
+
+[tool.poetry.group.gmail_client.dependencies]
+google-api-python-client = "^2.121.0"
+google-auth-httplib2 = "^0.2.0"
+google-auth-oauthlib = "^1.2.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 100
+ignore = ["E402", "F401"]
+unfixable = []
+per-file-ignores = {}
+
+[tool.pytest.ini_options]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+pythonpath = ["."]

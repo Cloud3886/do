@@ -1,0 +1,176 @@
+from typing import Any, Callable, Generic, Self, TypeVar
+
+from flask import (
+    Blueprint,
+    Flask,
+)
+from flask.globals import app_ctx
+
+from components.lib.basic_routes.app_route import AppRoute
+from components.lib.basic_routes.ui_view import UiView
+from components.lib.flask_router.teardown_recorder import Teardown, TeardownRecorder
+from components.lib.storage_manager import DatabaseManager
+from components.lib.storage_manager.storage_manager import StorageManager
+
+from .flask_test_client import FlaskRouterTester
+from .flask_view_adapter import FlaskViewAdapter
+
+C = TypeVar("C")
+
+
+class FlaskRouter(Generic[C]):
+    def __init__(
+        self,
+        name: str,
+        *,
+        views: list[UiView[Self]] | None = None,
+        routes: list[AppRoute[UiView[Self]]] | None = None,
+        config: C | None = None,
+        storage: StorageManager | None = None,
+        error_handlers: dict[type[Exception], Callable[[Any], Any]] = {},
+    ) -> None:
+        self._initialize_app(name)
+        self._initialize_fields()
+        self._initialize_configuration(config)
+        self._initialize_storage(storage)
+        self._initialize_views(views)
+        self._initialize_routes(routes)
+        self._initialize_error_handlers(error_handlers)
+        self._initialize_teardowns()
+
+    @staticmethod
+    def create_app(name: str):
+        return Flask(name)
+
+    def run(
+        self,
+        host: str | None = None,
+        port: int | None = None,
+        debug: bool | None = None,
+        load_dotenv: bool = True,
+        **options: Any,
+    ):
+        self.app.run(host, port, debug, load_dotenv, **options)
+
+    def tester(self):
+        return self.app.test_client()
+
+    def register_view(
+        self,
+        view: UiView[Self],
+        main: Blueprint | None = None,
+    ):
+        adapter = self._create_adapter(view)
+        view_func = adapter.build_view_function()
+        (main or self.app).add_url_rule(view.endpoint, view.name, view_func=view_func)
+
+    def register_route(
+        self,
+        route: AppRoute[UiView[Self]],
+        main: Blueprint | None = None,
+    ):
+        bp = self._configure_route(route)
+        (main or self.app).register_blueprint(bp)
+
+    def register_storage(self, storage: StorageManager) -> bool:
+        if not hasattr(self, "storage"):
+            self.storage = storage
+            if storage.db:
+                self._configure_db_session_with_flask(storage.db)
+                self._connect_db_session_with_app(storage.db)
+            return True
+        else:
+            return False
+
+    def register_error_handler(
+        self,
+        code_or_exception: type[Exception] | int,
+        f: Callable[[Any], Any],
+        main: Blueprint | None = None,
+    ):
+        (main or self.app).register_error_handler(code_or_exception, f)
+
+    def register_teardown_appcontext(self, key: str, teardown: Teardown):
+        self._teardown_appcontext.record_teardown(key, teardown)
+
+    def _initialize_app(self, name: str):
+        self.app = self.create_app(name)
+
+    def _initialize_fields(self):
+        self.logger = self.app.logger
+        self.app.test_client_class = FlaskRouterTester
+        self._teardown_appcontext = TeardownRecorder()
+
+    def _initialize_configuration(self, config: C | None):
+        self.config: C
+        if config:
+            self.app.config.from_object(config)
+            self.config = config
+
+    def _initialize_views(self, views: list[UiView[Self]] | None):
+        if views:
+            for view in views:
+                self.register_view(view)
+
+    def _initialize_routes(self, routes: list[AppRoute[UiView[Self]]] | None):
+        if routes:
+            for route in routes:
+                self.register_route(route)
+
+    def _initialize_storage(self, storage: StorageManager | None):
+        self.storage: StorageManager
+        if storage:
+            self.register_storage(storage)
+
+    def _initialize_error_handlers(
+        self, error_handlers: dict[type[Exception], Callable[[Any], Any]]
+    ):
+        for exception, handler in error_handlers.items():
+            self.register_error_handler(exception, handler)
+
+    def _initialize_teardowns(self):
+        self._teardown_appcontext.init(
+            registrar=self.app.teardown_appcontext,  # type: ignore
+            arg=self.app,
+        )
+
+    def _configure_route(self, route: AppRoute[UiView[Self]]) -> Blueprint:
+        bp = self._create_blueprint(route)
+
+        for view in route.views:
+            self.register_view(view, bp)
+
+        for nested_route in route.routes:
+            self.register_route(nested_route, bp)
+
+        for error, handler in route.error_handlers.items():
+            self.register_error_handler(error, handler, bp)
+
+        return bp
+
+    @classmethod
+    def _configure_db_session_with_flask(cls, db_manager: DatabaseManager):
+        def get_flask_app_ctx() -> int:
+            return id(app_ctx._get_current_object())  # type: ignore
+
+        db_manager.configure_session(get_flask_app_ctx)
+
+    def _connect_db_session_with_app(self, db_manager: DatabaseManager):
+        self.app.session = db_manager.session  # type: ignore
+
+        def remove_session(app: Flask):
+            app.session.remove()  # type: ignore
+
+        self.register_teardown_appcontext("remove_session", remove_session)
+
+    def _create_adapter(self, view: UiView[Self]) -> FlaskViewAdapter:
+        return FlaskViewAdapter[Self](self, view)
+
+    def _create_blueprint(self, route: AppRoute) -> Blueprint:
+        return Blueprint(
+            name=route.name,
+            import_name=route._root,
+            url_prefix=route.prefix,
+            template_folder=route.template_path,
+            subdomain=route.subdomain,
+        )
