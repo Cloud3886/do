@@ -1,6 +1,6 @@
-from typing import Any, Generator
 from test._utils.domain_tester import DomainTester
 from test._utils.setup_test import SetupTests
+from typing import Any, Generator
 
 import pytest
 from redis import Redis
