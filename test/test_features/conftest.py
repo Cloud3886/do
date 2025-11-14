@@ -1,6 +1,6 @@
-from typing import Any, Generator
 from test._utils.domain_tester import DomainTester
 from test._utils.setup_test import SetupTests
+from typing import Any, Generator
 
 import pytest
 from redis import Redis
@@ -11,7 +11,9 @@ from lib.main import create_app
 
 
 @pytest.fixture
-def router(request: pytest.FixtureRequest, setup_tests: SetupTests) -> Generator[SmorestRouter, Any, Any]:
+def router(
+    request: pytest.FixtureRequest, setup_tests: SetupTests
+) -> Generator[SmorestRouter, Any, Any]:
     # db_path = setup_tests.setup_db(request.node.name)
     # redis_port = setup_tests.setup_redis(request.node.name)
     # redis = Redis(port=redis_port)
