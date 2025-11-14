@@ -11,3 +11,8 @@ class TodoView(OpenapiView):
     
     def get(self):
         return self.serialize(self.ctrl.get_todo())
+    
+    def post(self):
+        # Respond with Redis PING as string, and optionally with todos as JSON
+        ping_result = self.router.storage.redis.execute_command("PING")
+        return {"redis": str(ping_result), "todos": self.serialize(self.ctrl.get_todo())}
