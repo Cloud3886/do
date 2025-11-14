@@ -1,3 +1,4 @@
+from typing import Any, Generator
 from test._utils.domain_tester import DomainTester
 from test._utils.setup_test import SetupTests
 
@@ -10,7 +11,7 @@ from lib.main import create_app
 
 
 @pytest.fixture
-def router(request: pytest.FixtureRequest, setup_tests: SetupTests) -> SmorestRouter:
+def router(request: pytest.FixtureRequest, setup_tests: SetupTests) -> Generator[SmorestRouter, Any, Any]:
     # db_path = setup_tests.setup_db(request.node.name)
     # redis_port = setup_tests.setup_redis(request.node.name)
     # redis = Redis(port=redis_port)
@@ -18,7 +19,7 @@ def router(request: pytest.FixtureRequest, setup_tests: SetupTests) -> SmorestRo
     # storage = StorageManager(db=db, redis=redis, debug=True)
     # router = create_app(storage=storage)
     router = create_app()
-    router.storage = None
+    router.storage = StorageManager()
     yield router
     # setup_tests.cleanup_redis(redis_port)
 
